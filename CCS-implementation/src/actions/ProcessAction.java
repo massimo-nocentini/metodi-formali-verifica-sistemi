@@ -14,4 +14,8 @@ public abstract class ProcessAction {
 
 	public abstract boolean isComplementOfOutputAction(OutputAction outputAction);
 
+	public CCSChannel getChannel() {
+		return ccsChannel;
+	}
+
 }

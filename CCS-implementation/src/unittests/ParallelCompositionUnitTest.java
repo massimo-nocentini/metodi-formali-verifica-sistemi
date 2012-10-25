@@ -120,7 +120,7 @@ public class ParallelCompositionUnitTest extends CCSProcessUnitTest {
 						"b")), new TauCCSProcess()));
 	}
 
-	protected CCSProcess makeProcessWithComplementaryActions() {
+	static CCSProcess makeProcessWithComplementaryActions() {
 		String channel = "a";
 		return new ParallelCompositionCCSProcess(new ActionPrefixingCCSProcess(
 				new InputAction(new CCSChannel(channel)), new TauCCSProcess()),
