@@ -1,7 +1,9 @@
 * Formal Models For System Verification course notes
   This document is a container of all the exercises that I did during
   the course of Formal Models For System Verification at University of
-  Florence.  The professors that gave the lectures is Loreti and Massink.
+  Florence.  The professors are Michele Loreti
+  (michele.loreti@unifi.it) and Mieke Massink
+  (mieke.massink@unifi.it).
 
   All the document content is written using the Italian language, the
   code sources using the English language instead.
