@@ -6,19 +6,16 @@
   All the document content is written using the Italian language, the
   code sources using the English language instead.
 
+  Follow a short descriptions for each of the exercises present in
+  this repository:
    
-# ** How to compile the document
-#    In order to compile the document is sufficient to run `make pdf` if
-#    the pdf output is desired, otherwise `make ps` if the postscript
-#    output is desired. Of course the previous commands have to be typed
-#    at the root of the project after cloned the git repository.  During
-#    my develop time I've used the full installation of the tex-live
-#    suite on a debian-powered system. It can be installed by running
-#    'apt-get install texlive-full'.
-   
-#    However, inside 'compiled-versions' folder, there is an already
-#    compiled pdf which is the latest version that is at least
-#    presentable.
+** CCS Process Algebra Implementation
+   This is a Java implementation of a few basic SOS rules of the CCS
+   process algebra. The implemented rules are: action prefixing,
+   visible choice, parallel composition, restriction and recursion.
+
+   The folder ``CCS-Implementation'' contains an Eclipse project and
+   the unit tests in order to fix what we had in mind.
    
 # ** How to use the Octave sources
 #    In order to use the R sources is sufficient to run R
