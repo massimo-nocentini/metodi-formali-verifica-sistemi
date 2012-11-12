@@ -1,2 +1,9 @@
 *~
 CCS-implementation/bin/
+.Rproj.user
+*.aux
+*.log
+*.out
+*.pdf
+*.toc
+*.RData
