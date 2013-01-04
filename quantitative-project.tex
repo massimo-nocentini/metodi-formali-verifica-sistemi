@@ -1,0 +1,158 @@
+
+
+\section{Basic Definitions}
+
+In this section we recall basic definitions used in the remaing part
+of the \emph{qualitative project} paper.
+
+\subsection{Stochastic Processes}
+
+A \emph{stochastic process} $p$ is a $\mathcal{T}$-indexed family of
+random variables $X_i$, formally $p = \{X_i: i \in \mathcal{T}\}$, in
+particular $p$ is called \emph{discrete} if $\mathcal{T} = \mathbb{N}
+$, otherwise $p$ is called \emph{continuous} if $\mathcal{T} =
+\mathbb{R} $.
+
+
+\subsection{Discrete Time Markov Chains}
+
+A \emph{Discrete Time Markov Chain} (DTMC) is a discrete stochastic
+process such that, given $\Omega$ a sample space, $X_i:\Omega
+\rightarrow \mathbb{N}, \forall i\in \mathbb{N} $.
+% Usually a DTMC is
+% modeled with a tuple $(S, P, AP, L)$ such that:
+% \begin{itemize}
+% \item $S$ is a finite set of \emph{states};
+% \item $P$ is a function such that $P:S\times S \rightarrow [0,1]$,
+%   where $\sum_{v \in S}{P(s,v)} = 1, \forall s \in S $;
+% \item $AP$ is a set of \emph{atomic propositions};
+% \item $L$ is a function such that $L:S \rightarrow AP$.
+% \end{itemize}
+
+\section{Herman's Stabilization algorithm}
+
+This paper study an algorithm about self-stabilization of
+fault-tolerant systems in a distributed environment. We can abstract a
+fault-tolerant system with a network of processes and the goal is to
+build a protocol which, applied to an initial configuration $i$ of the
+network, produces a new configuration $c$ such that:
+\begin{itemize}
+\item $c$ satisfies some property of interest;
+\item the protocol requires a \emph{finite} number of steps to produce
+  $c$;
+\item there is no intervention of outside objects in order to produce
+  $c$.
+\end{itemize}
+In the following section we state formally the problem described above
+and the Herman algorithm under study. We've used the article \cite{
+  KNP12a} to make our formalizations.
+
+\subsection{Background}
+
+Herman protocol \cite{Her90} is applied to a network of processes
+$p_i$ where $i \in \{1,\ldots, n\}$, structured in an oriented ring
+and ordered anticlockwise. This protocol is synchronous, that is
+actions taken by each process $p_i$ happen simultaneously, no
+interleaving are present. Following the presentation given by Herman,
+it is possible to represent each process $p_i$ with a single
+\emph{bit} $x_i$ and the entire network with a DTMC. With those basics
+we're ready to introduce some concepts that we want to study with a
+simulation using PRISM \cite{KNP11}.
+
+We define a \emph{network configuration} as a state of the DTMC with
+$n$ processes, so a tuple $(x_n, \ldots, x_1) \in \{0,1\}^n$. In the
+ring may exist one or more processes that have \emph{tokens} and those
+can be passed between processes $p_i$ and $p_{i+1}$ (so always to the
+right neighbor). A process $p_i$ has a token if $x_i =
+x_{i-1}$. Finally, a network configuration is \emph{stable} if
+$\exists! p_i$ that has a token.
+\\\\
+From the above definitions follow these facts:
+\begin{itemize}
+\item given a network with $n$ processes, the set of states $S$ of the
+  underlying DTMC has cardinality $2^n$. This can be proved saying
+  that each state $s\in S$ has $n$ components, each component has $2$
+  possible value, hence $|S| = 2^n$;
+\end{itemize}
+
+\subsection{Protocol rule}
+
+Let $k$ be a generic execution step, the protocol consists of the
+following rule:
+\begin{displaymath}
+  \begin{split}
+    x_{i}^{(k+1)} &:= x_{i-1}^{(k)} \quad &\text{if } x_{i}^{(k)} \not=
+    x_{i-1}^{(k)}\\
+    x_{i}^{(k+1)} &:= random(0,1) \quad &\text{if } x_{i}^{(k)} =
+    x_{i-1}^{(k)}
+  \end{split}
+\end{displaymath}
+where $x_{i}^{(k)}$ is the value of $x_i$ at step $k$, $:=$ means
+assignment and $random$ is a function that simulate a unbiased coin
+toss. In \autoref{table:herman-protocol-execution-example} we report a
+simple example of protocol execution applied to 5 processes, starting
+from the network configuration $(1, 1, 0, 0, 1)$.
+\begin{table}[ht]
+  \begin{center}
+    \begin{tabular}{cccc}
+      \hline
+      step & $(x_5, x_4, x_3, x_2, x_1)$ & Tokens owners & coin tosses \\ 
+      \hline     
+      1 & $(1, 1, 0, 0, 1)$ & $p_5, p_3, p_1$ & $x_1^{(2)}:= 0,
+      x_3^{(2)}:= 1, x_5^{(2)}:= 1$  \\
+      2 & $(1, 0, 1, 1, 0)$ & $p_3$ & $x_3^{(3)}:= 0$  \\
+      3 & $(0, 1, 0, 0, 1)$ & $p_3$ & $x_3^{(4)}:= 0$  \\
+      4 & $(1, 0, 0, 1, 0)$ & $p_4$ & $x_4^{(5)}:= 0$  \\
+      5 & $(0, 0, 1, 0, 1)$ & $p_5$ & $\ldots$  \\ 
+      \hline
+    \end{tabular}
+    \caption{Example of protocol execution}
+    \label{table:herman-protocol-execution-example}
+  \end{center}
+\end{table}
+
+It is interesting to observe these facts:
+\begin{itemize}
+\item from network configurations $\forall i:x_i=0$ and $\forall
+  i:x_i=1$ of length $n$, it is possible to reach every other state by
+  applying the second case of the protocol rule;
+\item the protocol doesn't stop when a stable network configuration is
+  reached. In fact, in a stable configuration, let $p_i$ be the token
+  owner: depending its coin tossing, $p_i$ can decide to pass the
+  token to $p_{i+1}$ or to keep it another turn (in the example
+  reported above, if at step 4 would have been $x_4^{(5)}:= 1$ the
+  next configuration would have been $(0, 1, 1, 0, 1)$, with $p_4$
+  token owner again);
+\item in order to have an estimate number of steps necessary to reach
+  a stable configuration we do a PRISM simulation, using the
+  \emph{Confidence Interval} method, with 1000 samples. Looking at the
+  log:
+\begin{verbatim}
+Path length statistics: average 5.4, min 1, max 29
+\end{verbatim}
+  So the average number of necessary steps for reaching a stable
+  configuration is $5.4$.
+\end{itemize}
+
+\subsection{Interesting properties}
+
+In this section we verify if Herman protocol satisfy some desired
+properties, in particular if a stable configuration is eventually
+reached and if it is reached within $k$ steps.
+
+Before get deep into properties verification it is important to
+understand that if we'd have used a \emph{qualitative} model checker
+to verify if a stable configuration is \emph{always} eventually
+reached, the result would be \emph{reject}. To see why, let the DTMC
+be in the state $(1,1,1,1,\ldots,1,1)$ and, repeating the application
+of rule two of the protocol, for all $p_i$ the toin coss results in
+$1$, getting $(1,1,1,1,\ldots,1,1)$ again. There exists an infinite
+path on the DTMC which catch the previous behavior, hence that path is
+the counterexample for ``from the initial state
+$(1,1,1,1,\ldots,1,1)$, is a stable configuration \emph{always}
+eventually reached?''
+\\\\
+The followings are properties we want to check:
+\lstinputlisting{quantitative-project/herman7.pctl}
+The results are respectively: $true, false, true, 0.8757, 5.4933$.
+

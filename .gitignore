@@ -7,3 +7,6 @@ CCS-implementation/bin/
 *.pdf
 *.toc
 *.RData
+*.bbl
+*.blg
+*.brf

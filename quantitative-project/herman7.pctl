@@ -1,0 +1,16 @@
+label "stable" = num_tokens=1;
+
+// from the initial state, a stable state is reached with probability 1
+P>=1 [ F "stable" ]
+
+// from the initial state, a stable state is reached within 10 steps with probability 1
+P>=1 [ F<=10 "stable" ]
+
+// from the initial state, a stable state is reached within 10 steps with probability .5
+P>=.5 [ F<=10 "stable" ]
+
+// from the initial state, what is the probability to reach a stable state within 10 steps?
+P=? [ F<=10 "stable" ]
+
+R=? [ F "stable" ]
+
