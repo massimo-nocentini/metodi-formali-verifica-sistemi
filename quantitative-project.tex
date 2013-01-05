@@ -63,9 +63,9 @@ We define a \emph{network configuration} as a state of the DTMC with
 $n$ processes, so a tuple $(x_n, \ldots, x_1) \in \{0,1\}^n$. In the
 ring may exist one or more processes that have \emph{tokens} and those
 can be passed between processes $p_i$ and $p_{i+1}$ (so always to the
-right neighbor). A process $p_i$ has a token if $x_i =
-x_{i-1}$. Finally, a network configuration is \emph{stable} if
-$\exists! p_i$ that has a token.
+right neighbor). A process $p_i$ has a token if $x_i = x_{i-1}$ ($x_1
+= x_n$ due to ring network structure). Finally, a network
+configuration is \emph{stable} if $\exists! p_i$ that has a token.
 \\\\
 From the above definitions follow these facts:
 \begin{itemize}
@@ -90,7 +90,7 @@ From the above definitions follow these facts:
       \item $(0,0,x_{n-2},\ldots, x_2, 0)$ in this configuration there
         are $2j+1$ token (one more due to $(x_n,x_{n-1})$);
       \item $(1,0,x_{n-2},\ldots, x_2,0)$ in this configuration there
-        are $2j-1$ token (one less breaking $(x_1,x_{n-1})$);
+        are $2j-1$ token (one less due to breaking $(x_1,x_{n-1})$);
       \end{itemize}
     \item $(1,x_{n-2},\ldots, x_2,0)$, we can complete it by adding
       $x_n$ such that:
@@ -185,15 +185,61 @@ eventually reached?''
 
 \subsubsection{One initial state $(1,1,1,\ldots,1,1)$}
 
-The followings are properties we want to check:
-\lstinputlisting{quantitative-project/herman7.pctl}
-The results are respectively: $true, false, true, 0.8757, 5.4933$.
+In \autoref{table:herman-initial-states-properties-results} we report
+the properties that we've verified with PRISM, the label ``stable''
+represent a predicate such that:
+\begin{displaymath}
+  \begin{split}
+    \text{stable is true} \leftrightarrow 1 = &(x_1=x_2?1:0)+(x_2=x_3?1:0)+(x_3=x_4?1:0)+(x_4=x_5?1:0)\\
+    &+(x_5=x_6?1:0)+(x_6=x_7?1:0)+(x_7=x_1?1:0)
+  \end{split}
+\end{displaymath}
+
+
+\begin{table}[ht]
+  \begin{center}
+    \begin{tabular}{p{5cm}cc}
+      \hline
+      description & PRISM property  & result \\
+      \hline     
+      from the initial state, a stable state is reached with
+      probability 1 & P>=1 [ F "stable" ] & true \\
+      from the initial state, a stable state is reached within 10
+      steps with probability 1 & P>=1 [ F<=10 "stable" ] & false\\
+      from the initial state, a stable state is reached within 10
+      steps with probability .5 & P>=.5 [ F<=10 "stable" ] & true\\
+      from the initial state, what is the probability to reach a
+      stable state within 10 steps? & P=? [ F<=10 "stable" ] & .8757\\
+      what is the expected number of steps required for the
+      self-stabilisation algorithm to reach a stable state? & R=? [ F
+      "stable" ] & 5.4933\\
+      \hline
+    \end{tabular}
+    \caption{Properties and their verification using a single initial
+      state}
+    \label{table:herman-initial-states-properties-results}
+  \end{center}
+\end{table}
 
 \subsubsection{Multiple initial states}
 
-The followings are properties we want to check:
-\lstinputlisting{quantitative-project/herman7-multi-initial-states.pctl}
-
+In \autoref{table:herman-log-chunck-multi-initial-states} we report
+the verification of the following property, which informally states:
+``what is the maximum/minimum expected time to reach a stable state,
+starting from any initial configuration in which there are k tokens?''
+\begin{displaymath}
+  filter(m, R=? [ F "stable" ], "k\_tokens") \quad m \in \{max, min\}
+\end{displaymath}
+that we've verified with PRISM considering all states of the DTMC as
+an initial state. The label ``stable'' is the predicate defined in the
+previous section and ``k\_tokens'' represent a predicate $tokens(k)$
+such that:
+\begin{displaymath}
+  \begin{split}
+    tokens(k) \text{ is true } \leftrightarrow k = &(x_1=x_2?1:0)+(x_2=x_3?1:0)+(x_3=x_4?1:0)+(x_4=x_5?1:0)\\
+    &+(x_5=x_6?1:0)+(x_6=x_7?1:0)+(x_7=x_1?1:0)
+  \end{split}
+\end{displaymath}
 
 \begin{table}[ht]
   \begin{center}
@@ -208,15 +254,17 @@ The followings are properties we want to check:
       7 & 2 & 5.493 & 5.493  \\ 
       \hline
     \end{tabular}
-    \caption{Log chunck about multi initial states}
+    \caption{Property verification about multi initial states}
     \label{table:herman-log-chunck-multi-initial-states}
   \end{center}
 \end{table}
 
-
+In \autoref{fig:herman-plot-output} we report a plot of the results
+shown in \autoref{table:herman-log-chunck-multi-initial-states}.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/max-min-expected-time-experiment.png}
-  \caption{Binary trees with four nodes}
-  \label{fig:binary-trees-with-four-nodes}
+  \caption{Max/min needed time to reach stable conf agains
+    tokens quantity}
+  \label{fig:herman-plot-output}
 \end{figure}
