@@ -7,7 +7,7 @@ dtmc
 // module for process 1
 module process1
 
-	x1 : [0..1] init 1;
+	x1 : [0..1];
 	
 	[step] (x1=x7) -> 0.5 : (x1'=0) + 0.5 : (x1'=1);
 	[step] !(x1=x7) -> (x1'=x7);
@@ -30,3 +30,7 @@ formula num_tokens = (x1=x2?1:0)+(x2=x3?1:0)+(x3=x4?1:0)+(x4=x5?1:0)+(x5=x6?1:0)
 rewards "steps"
 	true : 1;
 endrewards
+
+init
+	true
+endinit

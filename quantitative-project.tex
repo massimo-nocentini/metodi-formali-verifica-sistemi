@@ -73,6 +73,37 @@ From the above definitions follow these facts:
   underlying DTMC has cardinality $2^n$. This can be proved saying
   that each state $s\in S$ has $n$ components, each component has $2$
   possible value, hence $|S| = 2^n$;
+\item given a network with $n = 2k+1$ processes, there no exists
+  network configuration with $t=2j$ tokens. To see why we use a
+  constructive proof:
+  \begin{proof} Let $(x_n,x_{n-1}, \ldots, x_2,x_1)$ be a network
+    configuration such that $n=2k+1$ and $(x_{n-1}, \ldots,x_2, x_1)$
+    be a suffix with $t=2j$ tokens (which is perfectly legal, for
+    instance $(0,0,1,1,0,0)$, with tokens in $p_6, p_4, p_2, p_1$).
+
+    Suppose $x_1 = 0$ (the same argument may be applied for
+    $x_1=1)$. We can have the following suffixes with even length:
+    \begin{itemize}
+    \item $(0,x_{n-2},\ldots, x_2,0)$, we can complete it by adding
+      $x_n$ such that:
+      \begin{itemize}
+      \item $(0,0,x_{n-2},\ldots, x_2, 0)$ in this configuration there
+        are $2j+1$ token (one more due to $(x_n,x_{n-1})$);
+      \item $(1,0,x_{n-2},\ldots, x_2,0)$ in this configuration there
+        are $2j-1$ token (one less breaking $(x_1,x_{n-1})$);
+      \end{itemize}
+    \item $(1,x_{n-2},\ldots, x_2,0)$, we can complete it by adding
+      $x_n$ such that:
+      \begin{itemize}
+      \item $(0,1,x_{n-2},\ldots, x_2, 0)$ in this configuration there
+        are $2j+1$ token (one more due to $(x_1,x_n)$);
+      \item $(1,1,x_{n-2},\ldots, x_2,0)$ in this configuration there
+        are $2j+1$ token (one more due to $(x_n,x_{n-1})$).
+      \end{itemize}
+    \end{itemize}
+    Adding $x_n$ on configurations of even length we get $2j\pm 1 $
+    tokens, which is an odd number.
+  \end{proof}
 \end{itemize}
 
 \subsection{Protocol rule}
@@ -151,8 +182,41 @@ path on the DTMC which catch the previous behavior, hence that path is
 the counterexample for ``from the initial state
 $(1,1,1,1,\ldots,1,1)$, is a stable configuration \emph{always}
 eventually reached?''
-\\\\
+
+\subsubsection{One initial state $(1,1,1,\ldots,1,1)$}
+
 The followings are properties we want to check:
 \lstinputlisting{quantitative-project/herman7.pctl}
 The results are respectively: $true, false, true, 0.8757, 5.4933$.
 
+\subsubsection{Multiple initial states}
+
+The followings are properties we want to check:
+\lstinputlisting{quantitative-project/herman7-multi-initial-states.pctl}
+
+
+\begin{table}[ht]
+  \begin{center}
+    \begin{tabular}{cccc}
+      \hline
+      tokens & sat states (out of 128)  & maximum over filter &
+      manimum over filter \\ 
+      \hline     
+      1 & 14 & 0 & 0 \\
+      3 & 70 & 6.857 & 2.857  \\
+      5 & 42 & 5.973 & 5.018  \\
+      7 & 2 & 5.493 & 5.493  \\ 
+      \hline
+    \end{tabular}
+    \caption{Log chunck about multi initial states}
+    \label{table:herman-log-chunck-multi-initial-states}
+  \end{center}
+\end{table}
+
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/max-min-expected-time-experiment.png}
+  \caption{Binary trees with four nodes}
+  \label{fig:binary-trees-with-four-nodes}
+\end{figure}
