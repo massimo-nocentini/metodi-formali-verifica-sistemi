@@ -268,3 +268,32 @@ shown in \autoref{table:herman-log-chunck-multi-initial-states}.
     tokens quantity}
   \label{fig:herman-plot-output}
 \end{figure}
+
+\section{Dynamic power management}
+
+\begin{table}[ht]
+  \begin{center}
+    \begin{tabular}{cccccc}
+      \hline
+      action & step & time in state & q & sp & state reward  \\ 
+      \hline
+      - & 0 & 0.17529898470620078 & 0 & 1 & 0.0 \\
+       request  & 1 & 0.005583448654568147 & 1 & 2 & 1.0 \\
+       serve last  & 2 & 0.037968897997879614 & 0 & 1 & 0.0 \\ 
+       request  & 3 & 0.0011703015064502159 & 1 & 2 & 1.0 \\
+       serve last  & 4 & 0.012972810099631941 & 0 & 1 & 0.0 \\
+       request  & 5 & 0.003987650608881992 & 1 & 2 & 1.0 \\
+       serve last  & 6 & 2.1181000655402715 & 0 & 1 & 0.0 \\
+       request  & 7 & 0.0037317138619604204 & 1 & 2 & 1.0 \\
+       serve last  & 8 & 0.3315114804496303 & 0 & 1 & 0.0 \\
+       request  & 9 & 0.010092541816370613 & 1 & 2 & 1.0 \\
+       serve last  & 10 & 0.2910521865618801 & 0 & 1 & 0.0 \\
+       request  & 11 & 0.009291265782564638 & 1 & 2 & 1.0 \\
+       serve last  & 12 & 0.43564591071847647 & 0 & 1 & 0.0 \\
+       request  & 13 & 0.0016771441351985598 & 1 & 2 & 1.0 \\
+      \hline
+    \end{tabular}
+    \caption{Property verification about multi initial states}
+    \label{table:herman-log-chunck-multi-initial-states}
+  \end{center}
+\end{table}
