@@ -20,7 +20,7 @@ process such that, given $\Omega$ a sample space, $X_i:\Omega
 
 A \emph{Continuous Time Markov Chain} (CTMC) is a continuous
 stochastic process such that, given $\Omega$ a sample space,
-$X_i:\Omega \rightarrow \mathbb{R}, \forall i\in \mathbb{R} $.
+$X_i:\Omega \rightarrow \mathbb{N}, \forall i\in \mathbb{R} $.
 
 
 % Usually a DTMC is
@@ -78,15 +78,16 @@ From the above definitions follow these facts:
   that each state $s\in S$ has $n$ components, each component has $2$
   possible value, hence $|S| = 2^n$;
 \item given a network with $n = 2k+1$ processes, there no exists
-  network configuration with $t=2j$ tokens. To see why we use a
-  constructive proof:
+  network configuration with $t=2j$ tokens, with $j \leq k$. To see
+  why we use a constructive proof:
   \begin{proof} Let $(x_n,x_{n-1}, \ldots, x_2,x_1)$ be a network
     configuration such that $n=2k+1$ and $(x_{n-1}, \ldots,x_2, x_1)$
-    be a suffix with $t=2j$ tokens (which is perfectly legal, for
-    instance $(0,0,1,1,0,0)$, with tokens in $p_6, p_4, p_2, p_1$).
+    be a suffix with $t=2j$ tokens, for some $j\in \mathbb{N} $ (which
+    is perfectly legal, for instance $(0,0,1,1,0,0)$, with tokens in
+    $p_6, p_4, p_2, p_1$).
 
     Suppose $x_1 = 0$ (the same argument may be applied for
-    $x_1=1)$. We can have the following suffixes with even length:
+    $x_1=1)$. We can have the following suffixes of even length:
     \begin{itemize}
     \item $(0,x_{n-2},\ldots, x_2,0)$, we can complete it by adding
       $x_n$ such that:
@@ -173,7 +174,7 @@ Path length statistics: average 5.4, min 1, max 29
 
 In this section we verify if Herman protocol satisfy some desired
 properties, in particular if a stable configuration is eventually
-reached and if it is reached within $k$ steps.
+reached or if it is reached within $k$ steps.
 
 Before get deep into properties verification it is important to
 understand that if we'd have used a \emph{qualitative} model checker
@@ -308,15 +309,15 @@ components:
   represent the number of service requests asked up to a time $t$. The
   initial state of the \emph{Service Queue} is $0$, an empty queue,
   and a new request arrive every $.72$ seconds.
-\item a \emph{Service Provider} which carry out requests. This
+\item a \emph{Service Provider} which carries out requests. This
   component has three states: \emph{sleep, idle, busy}, with
   \emph{idle} is the initial state. We build a PRISM module with a
   variable such that it ranges over $\{0,1,2\}$ to cover the states of
   the component. The service provider serve a request every $.008$
   seconds. The Service Provider makes a transition from \emph{idle} to
   \emph{busy} whenever a request arrives, while it makes a transition
-  from \emph{busy} to \emph{idle} whenever it finishes the service of
-  the last request.
+  from \emph{busy} to \emph{idle} whenever it finishes to serve the
+  last request.
 \end{itemize}
 This two components cannot take actions independently, they must
 synchronize for:
@@ -326,9 +327,9 @@ synchronize for:
   done);
 \item serving a request: this can result in a non empty queue if, in
   the previous state there are at least 2 requests in queue, therefore
-  the provider has work to done again; or it can result in an empty
-  queue if, in the previous state there are exactly one request in
-  queue, therefore the provider has no request to handle, so it can
+  the provider has work to get done again; or it can result in an
+  empty queue if, in the previous state there are exactly one request
+  in queue, therefore the provider has no request to handle, so it can
   move to \emph{idle} state.
 \end{itemize}
 
@@ -342,8 +343,8 @@ From the modules' definitions reported above follow this facts:
 \item from the initial state, that is when the queue is \emph{empty}
   and the Service Provider is \emph{idle}, it is possible to reach
   only one state due to the synchronization on action \emph{request}:
-  this state record that in the queue there is exactly one element and
-  the Service Provider is \emph{busy}.
+  the new state records that the queue contains exactly one element
+  and the Service Provider is \emph{busy}.
 \end{itemize}
 
 \subsubsection{``Always accept requests and never serve them'' path
@@ -355,7 +356,7 @@ choose to accept requests and never serves them. In
 \autoref{fig:first-model-saturation-queue} we report this
 behavior. The plot is obtained exporting the path and loading the
 exported data in a R interpreter to plot the curve: the system, when
-the queue is full of requests, rejects every new one.
+the queue is full of requests, rejects all new requests.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/r-project/saturation-queue.pdf}
@@ -378,9 +379,9 @@ which holds, hence in this PRISM module the service locator never
 \subsection{Second model: adding Power Manager}
 
 Look at the previous model: the Service Provider decides for itself
-about its state transitions, using a strategy that depends on the
-number of requests present in the queue. In this new model we augment
-this behavior introducing a new component, a \emph{Power Manager},
+about its state transitions, using a strategy based on the number of
+requests present in the queue. In this new model we augment the
+previous behavior introducing a new component, a \emph{Power Manager},
 which interact with the Service Provider in order to drive its state
 transitions, especially between \emph{sleep} and \emph{idle} states.
 \\\\
@@ -498,10 +499,10 @@ $t\in[17, 22]$, but not for $t\in[0,\infty]\setminus[17, 22]$ ) and
 takes the queue size under half of the max dimension (in average).
 
 \subsubsection{Transient expected cumulative missed requests }
-In this paragraph we study another property about the transient
-expected cumulative number of lost requests due to a full queue. As
-done in the previous property, we use the same multiple values for
-$q_{trigger}$ and we introduce the following rewards structure:
+In this paragraph we study another property about the expected
+cumulative number of lost requests due to a full queue. As done in the
+previous property, we use the same multiple values for $q_{trigger}$
+and we introduce the following rewards structure:
 \begin{verbatim}
 rewards "lost"
 	[request] q=q_max : 1;
@@ -537,7 +538,7 @@ requests increase, in fact the more time the Power Manager waits
 before ``weak up'' the Service Locator, the more the queue gets bigger
 and more requests could be missed.
 
-\subsection{Transient expected cumulative power }
+\subsubsection{Transient expected cumulative power }
 
 In this paragraph we study the last property which concern the power
 consumption of the system. It isn't required to make any change to the
@@ -551,7 +552,7 @@ the following specification (from \cite{QWP99}):
   from \emph{sleep} to \emph{idle} uses 7.0 units and from \emph{idle}
   to \emph{sleep} uses 0.067 units.
 \end{quote}
-We definite the reward structure as follow:
+We definite the reward structure according the quote above:
 \begin{verbatim}
 rewards "power"
 	sp=0 : .13;
@@ -562,8 +563,8 @@ rewards "power"
 endrewards
 \end{verbatim}
 
-In \autoref{fig:expected-cumulative-power} we report the results of the
-experiment the following property which uses the structure just
+In \autoref{fig:expected-cumulative-power} we report the experiment
+results of the following property which uses the structure just
 defined:
 \begin{displaymath}
   R\{"power"\}_{=?} [ C<=T ]
@@ -581,7 +582,7 @@ queue size is very unstable, hence in the queue would be requests
 waiting for Service Provider. In that case the Service Provider will
 remain in its \emph{busy} state, limiting the number of transitions
 between the other two states ($sleep \rightarrow idle$ is particular
-heavy) paying twice the cost of being in \emph{idle} state.
+expensive) paying twice the cost of being in \emph{idle} state.
 
 \subsection{Third model: using \emph{stochastic policies}}
 
@@ -623,8 +624,8 @@ state:
 \end{itemize}
 
 We've repeated the same verification of the last three properties
-reported for the second model with $p_{sleep} \in {0, .2, .4, .6, .8,
-  1}$. In \autoref{fig:expected-queue-size-psleep},
+reported for the second model with $p_{sleep} \in \{0, .2, .4, .6, .8,
+1\}$. In \autoref{fig:expected-queue-size-psleep},
 \autoref{fig:expected-missed-requests-with-psleep} and
 \autoref{fig:expected-power-psleep} we report the plots which
 corresponds to those of the previous model about the expected queue
@@ -650,55 +651,14 @@ respectively.
   \label{fig:expected-power-psleep}
 \end{figure}
 We see that, for $p_{sleep} = 0$ in the long run the expected queue
-size is 0 (because the Service Provider ``never sleeps''), the
-expected number of missed requests stabilizes around 2.25 (while for
-greater values of $p_{sleep}$ the missed requests diverge) and the
-expected power is the greatest respect to greater values of
-$p_{sleep}$ (being always active has its drawbacks).
+size is 0 (because the Service Provider ``never sleeps'' and always
+does its job), the expected number of missed requests stabilizes
+around 2.25 (while for greater values of $p_{sleep}$ the missed
+requests diverge) and the expected power is the greatest respect to
+greater values of $p_{sleep}$ (being always active has its drawbacks).
 
 Instead, for $p_{sleep} = 1$ in the long run the expected queue size
 is the greatest (because the Service Provider ``sleeps as much as it
 can''), the expected number of missed requests diverges and the
-expected power is the lowest (being ``as lazy as possible'' produce
-less power consumption).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+expected power is the lowest (being ``as lazy as possible'' reduce
+power consumption).
