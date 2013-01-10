@@ -47,7 +47,7 @@ In the following section we state formally the problem described above
 and the Herman algorithm under study. We've used the article \cite{
   KNP12a} to make our formalizations.
 
-\subsection{Background}
+\subsection{Model}
 
 Herman protocol \cite{Her90} is applied to a network of processes
 $p_i$ where $i \in \{1,\ldots, n\}$, structured in an oriented ring
@@ -271,31 +271,97 @@ shown in \autoref{table:herman-log-chunck-multi-initial-states}.
 
 \section{Dynamic power management}
 
-In \autoref{fig:herman-plot-output} we report a plot of the results
-shown in \autoref{table:herman-log-chunck-multi-initial-states}.
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=13cm]{quantitative-project/r-project/hist-first-model-one-element-zero-element.pdf}
-  \caption{Max/min needed time to reach stable conf agains
-    tokens quantity}
-  \label{fig:herman-plot-output}
-\end{figure}
+In this section we'll study a \emph{dynamic power management} (DPM)
+system, a generalized version of a model presented in \cite{QWP99}
+which concerns the model of a 3 state Fujitsu disk drive.
 
+DPMs are interesting to study because they occur every time a device
+(or, more generally, a service provider) is present, such that the
+device has multiple power states with the following constraints:
+\begin{itemize}
+\item each state has a different power consumption associated to;
+\item each state has a different response time when a service is to be
+  performed.
+\end{itemize}
+The analysis of those model has the goal to reach a reasonable
+tradeoff between the power consumption and the delivered level of
+service, that is, having power consumption as low as possible and
+quality of service as high as possible.
+\\\\
+In the following sections we'll build three implementations, each of
+them with little differences respect the others, leaving some freedom
+degrees which allow us to understand how changes impact on power
+consumption and quality of service.
+
+\subsection{First model: Service Queue and Service Provider}
+
+The first model we've implement is composed by the following
+components:
+\begin{itemize}
+\item a \emph{Service Queue} which registers generic service
+  requests. We fix an upper bound $q_{max} = 20$ for its size and
+  build a PRISM module with $0,\ldots,q_{max}$ states, each of them
+  represent the number of service requests asked up to a time $t$. The
+  initial state of the \emph{Service Queue} is $0$, an empty queue,
+  and a new request arrive every $.72$ seconds.
+\item a \emph{Service Provider} which carry out requests. This
+  component has three states: \emph{sleep, idle, busy}, with
+  \emph{idle} is the initial state. We build a PRISM module with a
+  variable such that it ranges over $\{0,1,2\}$ to cover the states of
+  the component. The service provider serve a request every $.008$
+  seconds.
+\end{itemize}
+This two components cannot take actions independetly, they must
+synchronize for:
+\begin{itemize}
+\item receiving a request (in order to enque it correctly and moving
+  the provider in a \emph{busy} state because there's some work to get
+  done);
+\item serving a request: this can result in a non empty queue if, in
+  the previous state there are at least 2 requests in queue, therefore
+  the provider has work to done again; or it can result in an empty
+  queue if, in the previous state there are exactly one request in
+  queue, therefore the provider has no request to handle, so it can
+  move to \emph{idle} state.
+\end{itemize}
+
+From the modules' definitions reported above follow this facts:
+\begin{itemize}
+\item the total number of states of the PRISM system is
+  $|\{0,\ldots,q_{max}\} \times \{0,1,2\}| = 63$ as confirmed by the
+  log, looking for the dimension of the rate matrix;
+\item from the initial state, that is when the queue is \emph{empty}
+  and the Service Provider is \emph{idle}, it is possible to reach
+  only one state due to the sinchronization on action \emph{request}:
+  this state record that in the queue there is exactly one element and
+  the Service Provider is \emph{busy}.
+\end{itemize}
+
+It is interesting to report a simple simulation case which study a
+``particular'' path of the system, the one in which the system always
+choose to accept requests and never serves them. In
+\autoref{fig:first-model-saturation-queue} we report this
+behavior. The plot is obtained exporting the path and loading the
+exported data in a R interpreter to plot the curve: the system, when
+the queue is full of requests, rejects every new one.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/r-project/saturation-queue.pdf}
-  \caption{Max/min needed time to reach stable conf agains
-    tokens quantity}
-  \label{fig:herman-plot-output}
+  \caption{Queue saturation over time if a simulation path always
+    choose to accept requests and never serves them}
+  \label{fig:first-model-saturation-queue}
 \end{figure}
 
-The rate matrix belongs to $Matr(63 \times 63)$ (consult the log).
-
-From the initial state, that is when the queue is empty and the
-Service Provider is idle, it is possible to reach only one state due
-to the sinchronization on \emph{request} action: this state record
-that in the queue there is exactly one element and the Service
-Provider is busy.
+To finish the discussion about this first model we study if it is
+possible for the service provider to enter a \emph{sleep} state. In
+order to do that we verify the following PRISM property, where $sp=0$
+is a true predicate if and only if the service provider is in
+\emph{sleep} state:
+\begin{displaymath}
+  P_{<=0} [ F\quad sp=0 ]
+\end{displaymath}
+which holds, hence in this PRISM module the service locator never
+``\emph{sleep}''.
 
 \subsection{Transient and steady-state probability of a full queue}
 
