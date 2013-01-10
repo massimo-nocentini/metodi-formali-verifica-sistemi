@@ -1,9 +1,5 @@
 
-
 \section{Basic Definitions}
-
-In this section we recall basic definitions used in the remaing part
-of the \emph{qualitative project} paper.
 
 \subsection{Stochastic Processes}
 
@@ -19,6 +15,14 @@ $, otherwise $p$ is called \emph{continuous} if $\mathcal{T} =
 A \emph{Discrete Time Markov Chain} (DTMC) is a discrete stochastic
 process such that, given $\Omega$ a sample space, $X_i:\Omega
 \rightarrow \mathbb{N}, \forall i\in \mathbb{N} $.
+
+\subsection{Continuous Time Markov Chains}
+
+A \emph{Discrete Time Markov Chain} (DTMC) is a continuous stochastic
+process such that, given $\Omega$ a sample space, $X_i:\Omega
+\rightarrow \mathbb{N}, \forall i\in \mathbb{R} $.
+
+
 % Usually a DTMC is
 % modeled with a tuple $(S, P, AP, L)$ such that:
 % \begin{itemize}
@@ -45,7 +49,7 @@ network, produces a new configuration $c$ such that:
 \end{itemize}
 In the following section we state formally the problem described above
 and the Herman algorithm under study. We've used the article \cite{
-  KNP12a} to make our formalizations.
+  KNP12a} to make our abstractions.
 
 \subsection{Model}
 
@@ -70,7 +74,7 @@ configuration is \emph{stable} if $\exists! p_i$ that has a token.
 From the above definitions follow these facts:
 \begin{itemize}
 \item given a network with $n$ processes, the set of states $S$ of the
-  underlying DTMC has cardinality $2^n$. This can be proved saying
+  underlying DTMC has $2^n$ states. This can be proved saying
   that each state $s\in S$ has $n$ components, each component has $2$
   possible value, hence $|S| = 2^n$;
 \item given a network with $n = 2k+1$ processes, there no exists
@@ -176,7 +180,7 @@ understand that if we'd have used a \emph{qualitative} model checker
 to verify if a stable configuration is \emph{always} eventually
 reached, the result would be \emph{reject}. To see why, let the DTMC
 be in the state $(1,1,1,1,\ldots,1,1)$ and, repeating the application
-of rule two of the protocol, for all $p_i$ the toin coss results in
+of rule two of the protocol, for all $p_i$ the coin toss results in
 $1$, getting $(1,1,1,1,\ldots,1,1)$ again. There exists an infinite
 path on the DTMC which catch the previous behavior, hence that path is
 the counterexample for ``from the initial state
@@ -211,7 +215,7 @@ represent a predicate such that:
       from the initial state, what is the probability to reach a
       stable state within 10 steps? & P=? [ F<=10 "stable" ] & .8757\\
       what is the expected number of steps required for the
-      self-stabilisation algorithm to reach a stable state? & R=? [ F
+      self-stabilization algorithm to reach a stable state? & R=? [ F
       "stable" ] & 5.4933\\
       \hline
     \end{tabular}
@@ -246,7 +250,7 @@ such that:
     \begin{tabular}{cccc}
       \hline
       tokens & sat states (out of 128)  & maximum over filter &
-      manimum over filter \\ 
+      minimum over filter \\ 
       \hline     
       1 & 14 & 0 & 0 \\
       3 & 70 & 6.857 & 2.857  \\
@@ -264,7 +268,7 @@ shown in \autoref{table:herman-log-chunck-multi-initial-states}.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/max-min-expected-time-experiment.png}
-  \caption{Max/min needed time to reach stable conf agains
+  \caption{Max/min needed time to reach stable conf against
     tokens quantity}
   \label{fig:herman-plot-output}
 \end{figure}
@@ -284,7 +288,7 @@ device has multiple power states with the following constraints:
   performed.
 \end{itemize}
 The analysis of those model has the goal to reach a reasonable
-tradeoff between the power consumption and the delivered level of
+trade off between the power consumption and the delivered level of
 service, that is, having power consumption as low as possible and
 quality of service as high as possible.
 \\\\
@@ -314,7 +318,7 @@ components:
   from \emph{busy} to \emph{idle} whenever it finishes the service of
   the last request.
 \end{itemize}
-This two components cannot take actions independetly, they must
+This two components cannot take actions independently, they must
 synchronize for:
 \begin{itemize}
 \item receiving a request (in order to enque it correctly and moving
@@ -337,7 +341,7 @@ From the modules' definitions reported above follow this facts:
   log, looking for the dimension of the rate matrix;
 \item from the initial state, that is when the queue is \emph{empty}
   and the Service Provider is \emph{idle}, it is possible to reach
-  only one state due to the sinchronization on action \emph{request}:
+  only one state due to the synchronization on action \emph{request}:
   this state record that in the queue there is exactly one element and
   the Service Provider is \emph{busy}.
 \end{itemize}
@@ -402,7 +406,7 @@ which holds in this model while in first one doesn't.
 
 In the following paragraphs we'll study some properties of interest
 which regard transient and long-run probability of: a full queue,
-expected queue size, cumulated missed requests and expected power (for
+expected queue size, cumulative missed requests and expected power (for
 the latter ones we need to introduce some \emph{rewards structures}).
 
 \subsubsection{Transient and steady-state probability of a full queue}
@@ -416,7 +420,7 @@ time. The experiment stress the following formula:
 \end{displaymath}
 The transient probability stabilizes around .001 as confirmed by the
 \emph{green} curve which extends up to time 40, continuing the
-\emph{blu} curve which stops at time 20 instead.
+\emph{blue} curve which stops at time 20 instead.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/transient-probability-full-queue.png}
@@ -452,7 +456,7 @@ following formula:
   R\{"queue\_size"\}_{=?} [ I=T ]
 \end{displaymath}
 The transient probability stabilizes around 3.2 as confirmed by the
-\emph{blu} curve which stops at time 20.
+\emph{blue} curve which stops at time 20.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/expected-queue-size.png}
@@ -493,9 +497,9 @@ $q_{trigger}=18$ is better of the curve for $q_{trigger} = 16$ for
 $t\in[17, 22]$, but not for $t\in[0,\infty]\setminus[17, 22]$ ) and
 takes the queue size under half of the max dimension (in average).
 
-\subsubsection{Transient expected cumulated missed requests }
+\subsubsection{Transient expected cumulative missed requests }
 In this paragraph we study another property about the transient
-expected cumulated number of lost requests due to a full queue. As
+expected cumulative number of lost requests due to a full queue. As
 done in the previous property, we use the same multiple values for
 $q_{trigger}$ and we introduce the following rewards structure:
 \begin{verbatim}
@@ -509,12 +513,12 @@ which assigns a reward of $1$ to a transition $a$ such that:
   q= q_{max}$. Informally, the state from which the transition start
   have to be a state where the queue is full;
 \item the transition happen due to a synchronization on the action
-  \emph{request}. The contraint on the action label is necessary
+  \emph{request}. The constraint on the action label is necessary
   because a request $r$ is \emph{lost} (or \emph{missed}) if the queue
   is full and the system accept $r$.
 \end{itemize}
 
-In \autoref{fig:expected-cumulated-missed-requests} we report the
+In \autoref{fig:expected-cumulative-missed-requests} we report the
 result of the experiment of the following property, which uses the $C$
 operator to get the cumulative value respect the reward structure
 \emph{lost}:
@@ -525,15 +529,15 @@ operator to get the cumulative value respect the reward structure
   \centering
   \includegraphics[width=13cm,
   height=13cm]{quantitative-project/expected-missed-requests.png}
-  \caption{Expected cumulated missed number of requests}
-  \label{fig:expected-cumulated-missed-requests}
+  \caption{Expected cumulative missed number of requests}
+  \label{fig:expected-cumulative-missed-requests}
 \end{figure}
 For greater values of $q_{trigger}$ the expected number of missed
 requests increase, in fact the more time the Power Manager waits
 before ``weak up'' the Service Locator, the more the queue gets bigger
 and more requests could be missed.
 
-\subsection{Transient expected cumulated power }
+\subsection{Transient expected cumulative power }
 
 In this paragraph we study the last property which concern the power
 consumption of the system. It isn't required to make any change to the
@@ -558,25 +562,140 @@ rewards "power"
 endrewards
 \end{verbatim}
 
-In \autoref{fig:expected-cumulated-power} we report the results of the
+In \autoref{fig:expected-cumulative-power} we report the results of the
 experiment the following property which uses the structure just
 defined:
 \begin{displaymath}
-  R\{"power"\}=? [ C<=T ]
+  R\{"power"\}_{=?} [ C<=T ]
 \end{displaymath}
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=13cm]{quantitative-project/expected-power.png}
-  \caption{Expected cumulated power}
-  \label{fig:expected-cumulated-power}
+  \includegraphics[width=13cm,
+  height=13cm]{quantitative-project/expected-power.png}
+  \caption{Expected cumulative power}
+  \label{fig:expected-cumulative-power}
 \end{figure}
-It is not surprinsing to see that the power consumption for
+It is not surprising to see that the power consumption for
 $q_{trigger}=18$ is the lowest: when $q_{trigger} = 18$ the expected
 queue size is very unstable, hence in the queue would be requests
 waiting for Service Provider. In that case the Service Provider will
 remain in its \emph{busy} state, limiting the number of transitions
 between the other two states ($sleep \rightarrow idle$ is particular
 heavy) paying twice the cost of being in \emph{idle} state.
+
+\subsection{Third model: using \emph{stochastic policies}}
+
+In this paragraph we'll study the last model concerning DPM
+schemes. We use three components as in previous model but we introduce
+little changes in the Power Manager in order to apply \emph{stochastic
+  policies} on the transition $idle \rightarrow sleep$, the more
+expensive transition. Specifically we build a new version of the Power
+Manager module such that:
+\begin{itemize}
+\item insert a boolean variable which indicates if the transition has
+  to be performed or not. This variable is used as a guard for the
+  command which synchronize with the Service Provider to make it go to
+  ``sleep'';
+\item the synchronization command to ``wake up'' the Service Provider
+  now happen only when the queue is full, hence we remove the freedom
+  degree $q_{trigger}$ because it is useless in this new setting;
+\item insert a new command that makes the Power Manager synchronize
+  with the other components when the last request present in the queue
+  is finally delivered. As update it use a new freedom degree
+  $p_{sleep} \in [0,1]$ which represent the probability to set the new
+  variable explained two points before, that is the probability for
+  the transition $idle \rightarrow sleep$ to take place.
+\end{itemize}
+
+We can observe that for the minimum and maximum values of $p_{sleep}$
+we have, assuming the system is neither in its initial state (where
+the Service Provider is in \emph{sleep} state) nor in the first
+interval time such that the queue hasn't reached the \emph{full}
+state:
+\begin{itemize}
+\item if $p_{sleep} = 0$ then the Service Provider will never reach
+  the \emph{sleep} state because the Power Manager always reset its
+  internal variable that allow the $idle \rightarrow sleep$ transition;
+\item if $p_{sleep} = 1$ then the Service Provider will reach the
+  \emph{sleep} state every time it is possible, because the Power
+  Manager always set its internal variable that allow the $idle
+  \rightarrow sleep$ transition.
+\end{itemize}
+
+We've repeated the same verification of the last three properties
+reported for the second model with $p_{sleep} \in {0, .2, .4, .6, .8,
+  1}$. In \autoref{fig:expected-queue-size-psleep},
+\autoref{fig:expected-missed-requests-with-psleep} and
+\autoref{fig:expected-power-psleep} we report the plots which
+corresponds to those of the previous model about the expected queue
+size, the expected cumulative missed requests and the expected power
+respectively.
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-queue-size-with-psleep.png}
+  \caption{Expected queue size with multiple $p_{sleep}$}
+  \label{fig:expected-queue-size-psleep}
+\end{figure}
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-missed-requests-with-psleep.png}
+  \caption{Expected missed requests with multiple $p_{sleep}$}
+  \label{fig:expected-missed-requests-with-psleep}
+\end{figure}
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-power-with-psleep.png}
+  \caption{Expected power with multiple $p_{sleep}$}
+  \label{fig:expected-power-psleep}
+\end{figure}
+We see that, for $p_{sleep} = 0$ in the long run the expected queue
+size is 0 (because the Service Provider ``never sleeps''), the
+expected number of missed requests stabilizes around 2.25 (while for
+greater values of $p_{sleep}$ the missed requests diverge) and the
+expected power is the greatest respect to greater values of
+$p_{sleep}$ (being always active has its drawbacks).
+
+Instead, for $p_{sleep} = 1$ in the long run the expected queue size
+is the greatest (because the Service Provider ``sleeps as much as it
+can''), the expected number of missed requests diverges and the
+expected power is the lowest (being ``as lazy as possible'' produce
+less power consumption).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

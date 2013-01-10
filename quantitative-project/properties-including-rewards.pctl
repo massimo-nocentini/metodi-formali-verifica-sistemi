@@ -12,3 +12,9 @@ R{"lost"}=? [ C<=T ]
 
 R{"power"}=? [ C<=T ]
 
+// Does the Service Provider never reach the "sleep" state?
+P<=0 [ F sp=0 ]
+
+// Does the Service Provider eventually reach the "sleep" state?
+P>=1 [ F sp=0 ]
+

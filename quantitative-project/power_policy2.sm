@@ -78,8 +78,7 @@ endmodule
 // Controls power state of service provider
 // (this is done via synchronisation on idle2sleep/sleep2idle actions)
 
-// Bound on queue size, above which sleep2idle command is sent
-const int q_trigger = 12;
+
 
 // Probability of ordering the SP to sleep when queue empty
 const double p_sleep;
