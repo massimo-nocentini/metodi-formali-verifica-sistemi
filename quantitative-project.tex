@@ -271,29 +271,135 @@ shown in \autoref{table:herman-log-chunck-multi-initial-states}.
 
 \section{Dynamic power management}
 
-\begin{table}[ht]
-  \begin{center}
-    \begin{tabular}{cccccc}
-      \hline
-      action & step & time in state & q & sp & state reward  \\ 
-      \hline
-      - & 0 & 0.17529898470620078 & 0 & 1 & 0.0 \\
-       request  & 1 & 0.005583448654568147 & 1 & 2 & 1.0 \\
-       serve last  & 2 & 0.037968897997879614 & 0 & 1 & 0.0 \\ 
-       request  & 3 & 0.0011703015064502159 & 1 & 2 & 1.0 \\
-       serve last  & 4 & 0.012972810099631941 & 0 & 1 & 0.0 \\
-       request  & 5 & 0.003987650608881992 & 1 & 2 & 1.0 \\
-       serve last  & 6 & 2.1181000655402715 & 0 & 1 & 0.0 \\
-       request  & 7 & 0.0037317138619604204 & 1 & 2 & 1.0 \\
-       serve last  & 8 & 0.3315114804496303 & 0 & 1 & 0.0 \\
-       request  & 9 & 0.010092541816370613 & 1 & 2 & 1.0 \\
-       serve last  & 10 & 0.2910521865618801 & 0 & 1 & 0.0 \\
-       request  & 11 & 0.009291265782564638 & 1 & 2 & 1.0 \\
-       serve last  & 12 & 0.43564591071847647 & 0 & 1 & 0.0 \\
-       request  & 13 & 0.0016771441351985598 & 1 & 2 & 1.0 \\
-      \hline
-    \end{tabular}
-    \caption{Property verification about multi initial states}
-    \label{table:herman-log-chunck-multi-initial-states}
-  \end{center}
-\end{table}
+In \autoref{fig:herman-plot-output} we report a plot of the results
+shown in \autoref{table:herman-log-chunck-multi-initial-states}.
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/r-project/hist-first-model-one-element-zero-element.pdf}
+  \caption{Max/min needed time to reach stable conf agains
+    tokens quantity}
+  \label{fig:herman-plot-output}
+\end{figure}
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/r-project/saturation-queue.pdf}
+  \caption{Max/min needed time to reach stable conf agains
+    tokens quantity}
+  \label{fig:herman-plot-output}
+\end{figure}
+
+The rate matrix belongs to $Matr(63 \times 63)$ (consult the log).
+
+From the initial state, that is when the queue is empty and the
+Service Provider is idle, it is possible to reach only one state due
+to the sinchronization on \emph{request} action: this state record
+that in the queue there is exactly one element and the Service
+Provider is busy.
+
+\subsection{Transient and steady-state probability of a full queue}
+
+In \autoref{fig:transient-probability-full-queue} we report a plot of
+an experiment concerning the transient probability of the queue being
+full in order to see if it stabilize after an amount of time. The
+experiment stress the following formula:
+\begin{displaymath}
+   P=? [ F[T,T] q=q_{max} ]
+\end{displaymath}
+The transient probability stabilizes around .001 as confirmed by the
+\emph{green} curve which extends up to time 40, continuing the
+\emph{blu} curve which stops at time 20 instead.
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/transient-probability-full-queue.png}
+  \caption{Transient probability of the queue being full}
+  \label{fig:transient-probability-full-queue}
+\end{figure}
+It is possible to verify the previous result using another property
+which uses the \emph{steady states} operator:
+\begin{displaymath}
+S=? [ q=q_{max} ]
+\end{displaymath}
+verifying the property we get .001028, in other words: ``starting from
+the initial state, the steady-state (long-run) probability of having a
+full queue equals .001028''. We reached this result using the
+Gauss-Seidel numerical method because the Jacobi method (the default
+one in PRISM) didn't converge in this case.
+
+\subsection{Transient and steady-state expected queue size}
+
+In \autoref{fig:expected-queue-size} we report a plot of an experiment
+concerning the transient probability of the queue size. The experiment
+stress the following formula:
+\begin{displaymath}
+  R\{"queue\_size"\}=? [ I=T ]
+\end{displaymath}
+The transient probability stabilizes around 3.2 as confirmed by the
+\emph{blu} curve which stops at time 20.
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-queue-size.png}
+  \caption{Expected queue size}
+  \label{fig:expected-queue-size}
+\end{figure}
+It is possible to verify the previous result using another property
+which uses the \emph{steady states} operator:
+\begin{displaymath}
+  R\{"queue\_size"\}=? [ S ]
+\end{displaymath}
+verifying the property we get 3.20388, in other words: ``starting from
+the initial state, in the long-run the expected size of the queue
+equals 3.20388''. We reached this result using the Gauss-Seidel
+numerical method because the Jacobi method (the default one in PRISM)
+didn't converge in this case.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-queue-size-multi-q-triggers.png}
+  \caption{Expected queue size}
+  \label{fig:expected-queue-size}
+\end{figure}
+
+\subsection{Transient expected cumulated missed requests }
+
+\begin{verbatim}
+rewards "lost"
+	[request] q=q_max : 1;
+endrewards
+\end{verbatim}
+\begin{displaymath}
+  R\{"lost"\}=? [ C<=T ]
+\end{displaymath}
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-missed-requests.png}
+  \caption{Expected queue size}
+  \label{fig:expected-queue-size}
+\end{figure}
+
+\subsection{Transient expected cumulated power }
+
+\begin{verbatim}
+rewards "power"
+	sp=0 : .13;
+	sp=1 : .95;
+	sp=2 : 2.15;
+	[sleep2idle] true : 7;
+	[idle2sleep] true : .067;
+endrewards
+\end{verbatim}
+\begin{displaymath}
+  R\{"power"\}=? [ C<=T ]
+\end{displaymath}
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=13cm]{quantitative-project/expected-power.png}
+  \caption{Expected queue size}
+  \label{fig:expected-queue-size}
+\end{figure}
+
+
+
+
+
+
