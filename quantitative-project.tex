@@ -493,25 +493,61 @@ $q_{trigger}=18$ is better of the curve for $q_{trigger} = 16$ for
 $t\in[17, 22]$, but not for $t\in[0,\infty]\setminus[17, 22]$ ) and
 takes the queue size under half of the max dimension (in average).
 
-\subsection{Transient expected cumulated missed requests }
-
+\subsubsection{Transient expected cumulated missed requests }
+In this paragraph we study another property about the transient
+expected cumulated number of lost requests due to a full queue. As
+done in the previous property, we use the same multiple values for
+$q_{trigger}$ and we introduce the following rewards structure:
 \begin{verbatim}
 rewards "lost"
 	[request] q=q_max : 1;
 endrewards
 \end{verbatim}
+which assigns a reward of $1$ to a transition $a$ such that:
+\begin{itemize}
+\item let $p, r \in S$ such that $ p \xrightarrow{a} r$ and $p \vdash
+  q= q_{max}$. Informally, the state from which the transition start
+  have to be a state where the queue is full;
+\item the transition happen due to a synchronization on the action
+  \emph{request}. The contraint on the action label is necessary
+  because a request $r$ is \emph{lost} (or \emph{missed}) if the queue
+  is full and the system accept $r$.
+\end{itemize}
+
+In \autoref{fig:expected-cumulated-missed-requests} we report the
+result of the experiment of the following property, which uses the $C$
+operator to get the cumulative value respect the reward structure
+\emph{lost}:
 \begin{displaymath}
-  R\{"lost"\}=? [ C<=T ]
+  R\{"lost"\}_{=?} [ C<=T ]
 \end{displaymath}
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=13cm]{quantitative-project/expected-missed-requests.png}
-  \caption{Expected queue size}
-  \label{fig:expected-queue-size}
+  \includegraphics[width=13cm,
+  height=13cm]{quantitative-project/expected-missed-requests.png}
+  \caption{Expected cumulated missed number of requests}
+  \label{fig:expected-cumulated-missed-requests}
 \end{figure}
+For greater values of $q_{trigger}$ the expected number of missed
+requests increase, in fact the more time the Power Manager waits
+before ``weak up'' the Service Locator, the more the queue gets bigger
+and more requests could be missed.
 
 \subsection{Transient expected cumulated power }
 
+In this paragraph we study the last property which concern the power
+consumption of the system. It isn't required to make any change to the
+model, all we have to do is to build a reward structure which catch
+the following specification (from \cite{QWP99}):
+\begin{quote}
+  Energy is used at rate 0.13, 0.95 or 2.15 for Service Provider power
+  states \emph{sleep}, \emph{idle} and \emph{busy} respectively.
+
+  Transitions between power states have a fixed energy cost: going
+  from \emph{sleep} to \emph{idle} uses 7.0 units and from \emph{idle}
+  to \emph{sleep} uses 0.067 units.
+\end{quote}
+We definite the reward structure as follow:
 \begin{verbatim}
 rewards "power"
 	sp=0 : .13;
@@ -521,15 +557,26 @@ rewards "power"
 	[idle2sleep] true : .067;
 endrewards
 \end{verbatim}
+
+In \autoref{fig:expected-cumulated-power} we report the results of the
+experiment the following property which uses the structure just
+defined:
 \begin{displaymath}
   R\{"power"\}=? [ C<=T ]
 \end{displaymath}
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/expected-power.png}
-  \caption{Expected queue size}
-  \label{fig:expected-queue-size}
+  \caption{Expected cumulated power}
+  \label{fig:expected-cumulated-power}
 \end{figure}
+It is not surprinsing to see that the power consumption for
+$q_{trigger}=18$ is the lowest: when $q_{trigger} = 18$ the expected
+queue size is very unstable, hence in the queue would be requests
+waiting for Service Provider. In that case the Service Provider will
+remain in its \emph{busy} state, limiting the number of transitions
+between the other two states ($sleep \rightarrow idle$ is particular
+heavy) paying twice the cost of being in \emph{idle} state.
 
 
 
