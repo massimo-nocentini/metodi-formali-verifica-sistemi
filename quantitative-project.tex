@@ -309,7 +309,10 @@ components:
   \emph{idle} is the initial state. We build a PRISM module with a
   variable such that it ranges over $\{0,1,2\}$ to cover the states of
   the component. The service provider serve a request every $.008$
-  seconds.
+  seconds. The Service Provider makes a transition from \emph{idle} to
+  \emph{busy} whenever a request arrives, while it makes a transition
+  from \emph{busy} to \emph{idle} whenever it finishes the service of
+  the last request.
 \end{itemize}
 This two components cannot take actions independetly, they must
 synchronize for:
@@ -325,6 +328,8 @@ synchronize for:
   move to \emph{idle} state.
 \end{itemize}
 
+\subsubsection{Implications}
+
 From the modules' definitions reported above follow this facts:
 \begin{itemize}
 \item the total number of states of the PRISM system is
@@ -336,6 +341,9 @@ From the modules' definitions reported above follow this facts:
   this state record that in the queue there is exactly one element and
   the Service Provider is \emph{busy}.
 \end{itemize}
+
+\subsubsection{``Always accept requests and never serve them'' path
+  and property on \emph{sleep} state}
 
 It is interesting to report a simple simulation case which study a
 ``particular'' path of the system, the one in which the system always
@@ -363,14 +371,48 @@ is a true predicate if and only if the service provider is in
 which holds, hence in this PRISM module the service locator never
 ``\emph{sleep}''.
 
-\subsection{Transient and steady-state probability of a full queue}
+\subsection{Second model: adding Power Manager}
+
+Look at the previous model: the Service Provider decides for itself
+about its state transitions, using a strategy that depends on the
+number of requests present in the queue. In this new model we augment
+this behavior introducing a new component, a \emph{Power Manager},
+which interact with the Service Provider in order to drive its state
+transitions, especially between \emph{sleep} and \emph{idle} states.
+\\\\
+We build a new PRISM model for the Power Manager, which synchronize
+the Service Provider to make the following transitions. Let
+$q_{trigger}$ be a freedom degree which represent a state of the
+queue:
+\begin{itemize}
+\item $sleep \rightarrow idle$ if the current number $q$ of waiting
+  requests in queue is such that $q \geq q_{trigger}$: this transition
+  requires $1.6$ seconds;
+\item $idle \rightarrow sleep$ if the current number $q$ of waiting
+  requests in queue is such that $q = 0$: this transition requires
+  $.67$ seconds.
+\end{itemize}
+With the introduction of the Power Manager we check immediately that
+the Service Provider reach a \emph{sleep} state sooner or later. We
+verify the following:
+\begin{displaymath}
+  P_{>=1} [ F\quad sp=0 ]
+\end{displaymath}
+which holds in this model while in first one doesn't.
+
+In the following paragraphs we'll study some properties of interest
+which regard transient and long-run probability of: a full queue,
+expected queue size, cumulated missed requests and expected power (for
+the latter ones we need to introduce some \emph{rewards structures}).
+
+\subsubsection{Transient and steady-state probability of a full queue}
 
 In \autoref{fig:transient-probability-full-queue} we report a plot of
-an experiment concerning the transient probability of the queue being
-full in order to see if it stabilize after an amount of time. The
-experiment stress the following formula:
+an experiment concerning the \emph{transient} probability of the queue
+being full in order to see if it stabilize after an amount of
+time. The experiment stress the following formula:
 \begin{displaymath}
-   P=? [ F[T,T] q=q_{max} ]
+  P_{=?} [ F[T,T]\quad q=q_{max} ]
 \end{displaymath}
 The transient probability stabilizes around .001 as confirmed by the
 \emph{green} curve which extends up to time 40, continuing the
@@ -384,7 +426,7 @@ The transient probability stabilizes around .001 as confirmed by the
 It is possible to verify the previous result using another property
 which uses the \emph{steady states} operator:
 \begin{displaymath}
-S=? [ q=q_{max} ]
+S_{=?} [ q=q_{max} ]
 \end{displaymath}
 verifying the property we get .001028, in other words: ``starting from
 the initial state, the steady-state (long-run) probability of having a
@@ -392,13 +434,22 @@ full queue equals .001028''. We reached this result using the
 Gauss-Seidel numerical method because the Jacobi method (the default
 one in PRISM) didn't converge in this case.
 
-\subsection{Transient and steady-state expected queue size}
+\subsubsection{Transient and steady-state expected queue size}
 
 In \autoref{fig:expected-queue-size} we report a plot of an experiment
-concerning the transient probability of the queue size. The experiment
-stress the following formula:
+concerning the transient probability of the queue size. To perform the
+experiment we need to introduce the following \emph{rewards
+  structure}:
+\begin{verbatim}
+rewards "queue_size"
+	true : q;
+endrewards
+\end{verbatim}
+which assigns as ``rewards'' to a state $s$ the number $q$ of requests
+present in queue when the system is in state $s$. After we stress the
+following formula:
 \begin{displaymath}
-  R\{"queue\_size"\}=? [ I=T ]
+  R\{"queue\_size"\}_{=?} [ I=T ]
 \end{displaymath}
 The transient probability stabilizes around 3.2 as confirmed by the
 \emph{blu} curve which stops at time 20.
@@ -411,20 +462,36 @@ The transient probability stabilizes around 3.2 as confirmed by the
 It is possible to verify the previous result using another property
 which uses the \emph{steady states} operator:
 \begin{displaymath}
-  R\{"queue\_size"\}=? [ S ]
+  R\{"queue\_size"\}_{=?} [ S ]
 \end{displaymath}
 verifying the property we get 3.20388, in other words: ``starting from
 the initial state, in the long-run the expected size of the queue
 equals 3.20388''. We reached this result using the Gauss-Seidel
-numerical method because the Jacobi method (the default one in PRISM)
-didn't converge in this case.
+numerical method as did in the previous property.
 
+\subsubsection{Transient expected queue size with multiple values of
+  $q_{trigger}$}
+
+The specification of this second model allow us to change
+$q_{trigger}$ in order to study how that change impact on the
+system. In \autoref{fig:expected-queue-size-multiple-qtrigger} we
+report the expected queue size (as done in the previous paragraph)
+where $q_{trigger} \in \{4,6,8,10,12,14,16,18\}$.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/expected-queue-size-multi-q-triggers.png}
   \caption{Expected queue size}
-  \label{fig:expected-queue-size}
+  \label{fig:expected-queue-size-multiple-qtrigger}
 \end{figure}
+We see that greater $q_{trigger}$ implies more time is needed to
+stabilize the queue size. Informally, the more the power manager waits
+before synchronizing with the Service Provider, the more
+``fluctuations'' the system shows respect to queue size. Of those we
+can choose the curve for $q_{trigger}=12$ because it has no common
+point with other curves (for instance the blue bigger one for
+$q_{trigger}=18$ is better of the curve for $q_{trigger} = 16$ for
+$t\in[17, 22]$, but not for $t\in[0,\infty]\setminus[17, 22]$ ) and
+takes the queue size under half of the max dimension (in average).
 
 \subsection{Transient expected cumulated missed requests }
 
