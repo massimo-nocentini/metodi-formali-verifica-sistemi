@@ -114,7 +114,7 @@ From the above definitions follow these facts:
 \subsection{Protocol rule}
 
 Let $k$ be a generic execution step, the protocol consists of the
-following rule:
+following rules:
 \begin{displaymath}
   \begin{split}
     x_{i}^{(k+1)} &:= x_{i-1}^{(k)} \quad &\text{if } x_{i}^{(k)} \not=
@@ -124,7 +124,7 @@ following rule:
   \end{split}
 \end{displaymath}
 where $x_{i}^{(k)}$ is the value of $x_i$ at step $k$, $:=$ means
-assignment and $random$ is a function that simulate a unbiased coin
+assignment and $random$ is a function that simulates an unbiased coin
 toss. In \autoref{table:herman-protocol-execution-example} we report a
 simple example of protocol execution applied to 5 processes, starting
 from the network configuration $(1, 1, 0, 0, 1)$.
@@ -151,10 +151,10 @@ It is interesting to observe these facts:
 \begin{itemize}
 \item from network configurations $\forall i:x_i=0$ and $\forall
   i:x_i=1$ of length $n$, it is possible to reach every other state by
-  applying the second case of the protocol rule;
+  applying the second rule of the protocol;
 \item the protocol doesn't stop when a stable network configuration is
   reached. In fact, in a stable configuration, let $p_i$ be the token
-  owner: depending its coin tossing, $p_i$ can decide to pass the
+  owner: depending its coin toss outcome, $p_i$ can decide to pass the
   token to $p_{i+1}$ or to keep it another turn (in the example
   reported above, if at step 4 would have been $x_4^{(5)}:= 1$ the
   next configuration would have been $(0, 1, 1, 0, 1)$, with $p_4$
@@ -191,8 +191,8 @@ eventually reached?''
 \subsubsection{One initial state $(1,1,1,\ldots,1,1)$}
 
 In \autoref{table:herman-initial-states-properties-results} we report
-the properties that we've verified with PRISM, the label ``stable''
-represent a predicate such that:
+the properties that we've verified with PRISM using a network with 7
+processes, the label ``stable'' represent a predicate such that:
 \begin{displaymath}
   \begin{split}
     \text{stable is true} \leftrightarrow 1 = &(x_1=x_2?1:0)+(x_2=x_3?1:0)+(x_3=x_4?1:0)+(x_4=x_5?1:0)\\
@@ -208,16 +208,16 @@ represent a predicate such that:
       description & PRISM property  & result \\
       \hline     
       from the initial state, a stable state is reached with
-      probability 1 & P>=1 [ F "stable" ] & true \\
+      probability 1 & $P_{>=}1 [ F "stable" ]$ & true \\
       from the initial state, a stable state is reached within 10
-      steps with probability 1 & P>=1 [ F<=10 "stable" ] & false\\
+      steps with probability 1 & $P_{>=1} [ F_{<=}10 "stable" ]$ & false\\
       from the initial state, a stable state is reached within 10
-      steps with probability .5 & P>=.5 [ F<=10 "stable" ] & true\\
+      steps with probability .5 & $P_{>=}.5 [ F_{<=}10 "stable" ]$ & true\\
       from the initial state, what is the probability to reach a
-      stable state within 10 steps? & P=? [ F<=10 "stable" ] & .8757\\
+      stable state within 10 steps? & $P_{=?} [ F_{<=}10 "stable" ]$ & .8757\\
       what is the expected number of steps required for the
-      self-stabilization algorithm to reach a stable state? & R=? [ F
-      "stable" ] & 5.4933\\
+      self-stabilization algorithm to reach a stable state? & $R_{=?} [ F
+      "stable" ]$ & 5.4933\\
       \hline
     \end{tabular}
     \caption{Properties and their verification using a single initial
@@ -265,7 +265,12 @@ such that:
 \end{table}
 
 In \autoref{fig:herman-plot-output} we report a plot of the results
-shown in \autoref{table:herman-log-chunck-multi-initial-states}.
+shown in \autoref{table:herman-log-chunck-multi-initial-states}: when
+in the initial configuration are present $3$ tokens then more steps
+are needed to reach a stable configuration. Observe that if the
+initial configuration contains exactly one token then no step is
+necessary (as reported in the first row of
+\autoref{table:herman-log-chunck-multi-initial-states}).
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/max-min-expected-time-experiment.png}
@@ -288,7 +293,7 @@ device has multiple power states with the following constraints:
 \item each state has a different response time when a service is to be
   performed.
 \end{itemize}
-The analysis of those model has the goal to reach a reasonable
+The analysis of those models has the goal to reach a reasonable
 trade off between the power consumption and the delivered level of
 service, that is, having power consumption as low as possible and
 quality of service as high as possible.
@@ -304,11 +309,11 @@ The first model we've implement is composed by the following
 components:
 \begin{itemize}
 \item a \emph{Service Queue} which registers generic service
-  requests. We fix an upper bound $q_{max} = 20$ for its size and
-  build a PRISM module with $0,\ldots,q_{max}$ states, each of them
-  represent the number of service requests asked up to a time $t$. The
-  initial state of the \emph{Service Queue} is $0$, an empty queue,
-  and a new request arrive every $.72$ seconds.
+  requests. We fix an upper bound $q_{max} = 20$ for the queue
+  capacity and build a PRISM module with $0,\ldots,q_{max}$ states,
+  each of them represent the number of service requests asked up to a
+  time $t$. The initial state of the \emph{Service Queue} is $0$, an
+  empty queue, and a new request arrive every $.72$ seconds.
 \item a \emph{Service Provider} which carries out requests. This
   component has three states: \emph{sleep, idle, busy}, with
   \emph{idle} is the initial state. We build a PRISM module with a
@@ -328,7 +333,7 @@ synchronize for:
 \item serving a request: this can result in a non empty queue if, in
   the previous state there are at least 2 requests in queue, therefore
   the provider has work to get done again; or it can result in an
-  empty queue if, in the previous state there are exactly one request
+  empty queue if, in the previous state there is exactly one request
   in queue, therefore the provider has no request to handle, so it can
   move to \emph{idle} state.
 \end{itemize}
@@ -366,15 +371,15 @@ the queue is full of requests, rejects all new requests.
 \end{figure}
 
 To finish the discussion about this first model we study if it is
-possible for the service provider to enter a \emph{sleep} state. In
-order to do that we verify the following PRISM property, where $sp=0$
-is a true predicate if and only if the service provider is in
-\emph{sleep} state:
+possible for the service provider to enter in the \emph{sleep}
+state. In order to do that we verify the following PRISM property,
+where $sp=0$ is a true predicate if and only if the service provider
+is in \emph{sleep} state:
 \begin{displaymath}
   P_{<=0} [ F\quad sp=0 ]
 \end{displaymath}
 which holds, hence in this PRISM module the service locator never
-``\emph{sleep}''.
+``\emph{sleeps}''.
 
 \subsection{Second model: adding Power Manager}
 
@@ -442,7 +447,7 @@ one in PRISM) didn't converge in this case.
 \subsubsection{Transient and steady-state expected queue size}
 
 In \autoref{fig:expected-queue-size} we report a plot of an experiment
-concerning the transient probability of the queue size. To perform the
+concerning the transient expected queue size. To perform the
 experiment we need to introduce the following \emph{rewards
   structure}:
 \begin{verbatim}
@@ -511,12 +516,12 @@ endrewards
 which assigns a reward of $1$ to a transition $a$ such that:
 \begin{itemize}
 \item let $p, r \in S$ such that $ p \xrightarrow{a} r$ and $p \vdash
-  q= q_{max}$. Informally, the state from which the transition start
+  q= q_{max}$. Informally, the state from which the transition starts
   have to be a state where the queue is full;
-\item the transition happen due to a synchronization on the action
+\item the transition happens due to a synchronization on the action
   \emph{request}. The constraint on the action label is necessary
   because a request $r$ is \emph{lost} (or \emph{missed}) if the queue
-  is full and the system accept $r$.
+  is full when $r$ arrives.
 \end{itemize}
 
 In \autoref{fig:expected-cumulative-missed-requests} we report the
@@ -578,7 +583,7 @@ defined:
 \end{figure}
 It is not surprising to see that the power consumption for
 $q_{trigger}=18$ is the lowest: when $q_{trigger} = 18$ the expected
-queue size is very unstable, hence in the queue would be requests
+queue size is very unstable, hence the queue would contain requests
 waiting for Service Provider. In that case the Service Provider will
 remain in its \emph{busy} state, limiting the number of transitions
 between the other two states ($sleep \rightarrow idle$ is particular
@@ -587,25 +592,25 @@ expensive) paying twice the cost of being in \emph{idle} state.
 \subsection{Third model: using \emph{stochastic policies}}
 
 In this paragraph we'll study the last model concerning DPM
-schemes. We use three components as in previous model but we introduce
-little changes in the Power Manager in order to apply \emph{stochastic
-  policies} on the transition $idle \rightarrow sleep$, the more
-expensive transition. Specifically we build a new version of the Power
-Manager module such that:
+schemes. We use three components as in previous models but we
+introduce little changes in the Power Manager in order to apply
+\emph{stochastic policies} on the transition $idle \rightarrow sleep$,
+the more expensive transition. Specifically we build a new version of
+the Power Manager module such that:
 \begin{itemize}
-\item insert a boolean variable which indicates if the transition has
-  to be performed or not. This variable is used as a guard for the
+\item has a boolean variable which indicates if the transition has to
+  be performed or not. This variable is used as a guard for the
   command which synchronize with the Service Provider to make it go to
   ``sleep'';
 \item the synchronization command to ``wake up'' the Service Provider
   now happen only when the queue is full, hence we remove the freedom
   degree $q_{trigger}$ because it is useless in this new setting;
-\item insert a new command that makes the Power Manager synchronize
-  with the other components when the last request present in the queue
-  is finally delivered. As update it use a new freedom degree
-  $p_{sleep} \in [0,1]$ which represent the probability to set the new
-  variable explained two points before, that is the probability for
-  the transition $idle \rightarrow sleep$ to take place.
+\item has a new command that makes the Power Manager synchronize with
+  the other components when the last request present in the queue is
+  finally delivered. As update it use a new freedom degree $p_{sleep}
+  \in [0,1]$ which represent the probability to set the new variable
+  explained two points before, that is the probability for the
+  transition $idle \rightarrow sleep$ to take place.
 \end{itemize}
 
 We can observe that for the minimum and maximum values of $p_{sleep}$
@@ -618,9 +623,9 @@ state:
   the \emph{sleep} state because the Power Manager always reset its
   internal variable that allow the $idle \rightarrow sleep$ transition;
 \item if $p_{sleep} = 1$ then the Service Provider will reach the
-  \emph{sleep} state every time it is possible, because the Power
-  Manager always set its internal variable that allow the $idle
-  \rightarrow sleep$ transition.
+  \emph{sleep} state every time it can, because the Power Manager
+  always set its internal variable that allow the $idle \rightarrow
+  sleep$ transition.
 \end{itemize}
 
 We've repeated the same verification of the last three properties
@@ -630,7 +635,7 @@ reported for the second model with $p_{sleep} \in \{0, .2, .4, .6, .8,
 \autoref{fig:expected-power-psleep} we report the plots which
 corresponds to those of the previous model about the expected queue
 size, the expected cumulative missed requests and the expected power
-respectively.
+consumption respectively.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=13cm]{quantitative-project/expected-queue-size-with-psleep.png}

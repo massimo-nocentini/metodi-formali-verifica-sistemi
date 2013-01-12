@@ -145,7 +145,7 @@ type formula =
 | Diamond of (action -> bool) * formula
 | Min of string * process list * formula
 | Max of string * process list * formula
-| Var of string;;
+| VarFormula of string;;
 
 let rec unfold_formula var_name to_insert =
   let rec unfold_in = function
@@ -156,7 +156,7 @@ let rec unfold_formula var_name to_insert =
     | Diamond (pred, f) -> Diamond (pred, (unfold_in f))
     | Min (var, procs, f) -> Min (var, procs, (unfold_in f))
     | Max (var, procs, f) -> Max (var, procs, (unfold_in f))
-    | Var var as original->
+    | VarFormula var as original->
       if var = var_name
       then to_insert
       else original
@@ -171,11 +171,17 @@ let rec sat p = function
   | And (f,g) -> (sat p f) && (sat p g)
   | Box (pred, f) ->
     let pred_matchers = List.find_all
-      (fun (a, p') -> pred a) (next p) in
+      (fun (a, p') ->
+	match a with
+	(* | Tau -> true *)
+	| others -> pred a) (next p) in
     List.for_all (fun (a, p') -> sat p' f) pred_matchers
   | Diamond (pred, f) ->
     let pred_matchers = List.find_all
-      (fun (a, p') -> pred a) (next p) in
+      (fun (a, p') ->
+	match a with
+	(* | Tau -> true *)
+	| others -> pred a) (next p) in
     List.exists (fun (a, p') -> sat p' f) pred_matchers
   | Min (var_name, seen_procs, f) ->
     if List.mem p seen_procs
@@ -187,10 +193,10 @@ let rec sat p = function
     else sat p (unfold_formula var_name (Max (var_name, (p::seen_procs), f)) f)
   | _ -> false;;
 
-(* let var_name = 'X' in *)
-(* let unfold_into = Prefix (In "a", Parallel (Prefix (Out "b", Var var_name), Var var_name)) in *)
-(*   let rec_process = Recur (var_name, unfold_into) in *)
-(*   string_of_process (unfold_process var_name rec_process unfold_into);; *)
+let var_name = 'X' in
+let unfold_into = Prefix (In "a", Parallel (Prefix (Out "b", Var var_name), Var var_name)) in
+let rec_process = Recur (var_name, unfold_into) in
+string_of_process (unfold_process var_name rec_process unfold_into);;
 
 let pred = function action ->
   match action with
@@ -199,6 +205,150 @@ let pred = function action ->
 let rec_formula =
   Box (
     pred,
-    Or (Diamond (pred, True), Var "X")
+    Or (Diamond (pred, True), VarFormula "X")
   ) in
 unfold_formula "X" rec_formula rec_formula;;
+
+
+let process_s = Recur ('X', Prefix (In "a", Prefix (In "b", Recur ('Y', Choice (Prefix (In "b", Var 'Y'), Prefix (In "a", Var 'X')))))) in
+let s_not_bisimilar_t_formula =
+  Box (
+    (fun a -> (channel_of a) = "a"),
+    True      
+  ) in
+sat process_s s_not_bisimilar_t_formula;;
+
+(** Entry point of the program*)
+let not_bisimilar_processes_example = function () ->
+  let process_s = Recur (
+    'X',
+    Prefix (In "a",
+	    Prefix (In "b",
+		    Recur ('Y',
+			   Choice (Prefix (In "b", Var 'Y'),
+				   Prefix (In "a", Var 'X')))))) in
+  let process_t = Recur (
+    'X',
+    Prefix (In "a",
+	    Recur ('Y',
+		   Choice (Prefix (In "b", Var 'Y'),
+			   Prefix (In "b", Prefix (In "a",
+						   Var 'X')))))) in
+  let process_v =
+    let v2 = Recur ('Y',
+		    Choice (Prefix (In "b", Var 'Y'),
+			    Prefix (In "a", Var 'X'))) in
+    Recur ('X',
+	   Prefix (In "a",
+		   Choice (
+		     Prefix (In "b", Prefix (In "b", v2)),
+		     Prefix (In "b", v2)))) in
+  let s_not_bisimilar_t_formula =
+    Box (
+      (fun a -> (channel_of a) = "a"),
+      Box (
+	(fun a -> (channel_of a) = "b"),
+	Diamond (
+	  (fun a -> (channel_of a) = "b"),
+	  True))) in
+  let s_not_bisimilar_v_formula =
+    Box (
+      (fun a -> (channel_of a) = "a"),
+      Diamond (
+	(fun a -> (channel_of a) = "b"),
+	Box (
+	  (fun a -> (channel_of a) = "a"),
+	  False))) in
+  let t_not_bisimilar_v_formula =
+    Box (
+      (fun a -> (channel_of a) = "a"),
+      Diamond (
+	(fun a -> (channel_of a) = "b"),
+	Box (
+	  (fun a -> (channel_of a) = "b"),
+	  False))) in
+  (* let datas_filename = Sys.argv.(1) in *)
+  (* let nodes_in_each_tree = Sys.argv.(2) in *)
+  print_string ("Process s: " ^ string_of_process process_s);
+  print_newline ();  
+  print_string ("Process t: " ^ string_of_process process_t);
+  print_newline ();  
+  print_string ("Process v: " ^ string_of_process process_v);
+  print_newline ();
+  print_newline ();
+  let sat_result first_descr second_descr f_descr first second f =
+    let verb_of_verification_result = function
+      | true -> " is "
+      | false -> " isn't " in
+    let verify_formula_on p = sat p f in
+    let first_sat_result = verify_formula_on first in
+    let second_sat_result = verify_formula_on second in
+    print_string (first_descr ^
+		    verb_of_verification_result (first_sat_result = second_sat_result) ^
+		    " bisimilar to " ^
+		    second_descr ^
+		    " due to formula f= " ^ f_descr);
+    print_newline ();
+    print_string (first_descr ^ " satisfy f: " ^
+		    string_of_bool (first_sat_result));
+    print_newline ();
+    print_string (second_descr ^ " satisfy f: " ^
+		    string_of_bool (second_sat_result));
+    print_newline () in
+  sat_result "s" "t" "[a][b]<a>tt" process_s process_t s_not_bisimilar_t_formula;
+  print_newline ();
+  print_newline ();
+  sat_result "s" "v" "[a]<b>[a]ff" process_s process_v s_not_bisimilar_v_formula;
+  print_newline ();
+  print_newline ();
+  sat_result "t" "v" "[a]<b>[b]ff" process_t process_v t_not_bisimilar_v_formula;;
+
+let car_train_crossing_example = function () ->
+  let road = Recur ('X',
+		    Prefix (In "car",
+			    Prefix (In "up",
+				    Prefix (Out "car_cross",
+					    Prefix (Out "down", Var 'X'))))) in
+  let rail = Recur ('Y',
+		    Prefix (In "train",
+			    Prefix (In "green",
+				    Prefix (Out "train_cross",
+					    Prefix (Out "red", Var 'Y'))))) in
+  let signal = Recur ('Z',
+		      Choice ((Prefix (Out "green",
+				       Prefix (In "red", Var 'Z'))),
+			      (Prefix (Out "up",
+				       Prefix (In "down", Var 'Z'))))) in
+  let crossing =
+    Restrict (Parallel (Parallel (road, rail), signal),
+	      ["green"; "red"; "up"; "down"]) in
+  let safety_formula = Max ("Z", [],
+			    And (Or (Box ((fun a ->
+			      (channel_of a) = "train_cross"), False),
+				     Box ((fun a ->
+				       (channel_of a) = "cross_cross"), False)),
+				 Box ((fun a -> true), VarFormula "Z"))) in
+  print_string ("Process road: " ^ string_of_process road);
+  print_newline ();  
+  print_string ("Process rail: " ^ string_of_process rail);
+  print_newline ();
+  print_string ("Process signal: " ^ string_of_process signal);
+  print_newline ();  
+  print_string ("Process crossing: " ^ string_of_process crossing);
+  print_newline ();  
+  print_string (string_of_process crossing);
+  print_newline ();
+  print_string ("Process crossing satisfy maxZ(([train_cross]ff \
+ or [car_cross]ff) and [Act]Z): " ^
+    (string_of_bool (sat crossing safety_formula)));;  
+
+let _ =
+  print_string "--------not bisimilar processes example------------";
+  print_newline ();
+  not_bisimilar_processes_example ();
+  print_newline ();
+  print_newline ();
+  print_string "--------car train crossing example------------";
+  print_newline ();
+  car_train_crossing_example();
+  print_newline ();;
