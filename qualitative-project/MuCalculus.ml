@@ -34,6 +34,11 @@ let rec unfold_process var_name to_insert =
     | Nil -> Nil
     | Prefix (action, process) ->
       Prefix (action, unfold process)
+      (* begin *)
+      (* 	match action with *)
+      (* 	| Tau -> unfold process *)
+      (* 	| other ->       *)
+    (* end *)
     | Choice (p,q) ->
       Choice (unfold p, unfold q)
     | Parallel (p, q) ->
@@ -87,7 +92,7 @@ let rec string_of_process =
 
 let rec next =
   function
-  | Prefix (action,p) -> [(action,p)]
+  | Prefix (action,p) -> [action,p]
   | Choice (p,q) -> (next p) @ (next q)
   | Parallel (p,q) ->
     let next_of_p = next p in
@@ -100,7 +105,7 @@ let rec next =
 	let out_actions = List.filter
 	  (fun (b, q') ->
 	    match b with
-	    | Out c -> true
+	    | Out a when a = c -> true
 	    | _ -> false)
 	  next_of_q in	
 	sync_actions
@@ -111,7 +116,7 @@ let rec next =
 	let in_actions = List.filter
 	  (fun (b, q') ->
 	    match b with
-	    | In c -> true
+	    | In a when a = c -> true
 	    | _ -> false)
 	  next_of_q in	
 	sync_actions
@@ -123,12 +128,15 @@ let rec next =
       (sync_actions [] next_of_p)
   | Restrict (p, channels) -> 
     let allowed_nexts = List.filter
-      (fun (a,p) -> not (List.mem (channel_of a) channels))
+      (fun (a,p) ->
+	match a with
+	| Tau -> true
+	| other -> not (List.mem (channel_of other) channels))
       (next p) in
     List.map (fun (a, p) -> a, Restrict (p, channels))
       allowed_nexts
   | Rename (p, rel) ->
-    List.map (fun (a,p) -> a, Rename (p, rel))
+    List.map (fun (a,p) -> (rename_action rel a), Rename (p, rel))
       (next p)
   | Recur (var_name, p) ->
     List.map (fun (a,q) -> a, (unfold_process var_name p q))
@@ -323,11 +331,60 @@ let car_train_crossing_example = function () ->
     Restrict (Parallel (Parallel (road, rail), signal),
 	      ["green"; "red"; "up"; "down"]) in
   let safety_formula = Max ("Z", [],
-			    And (Or (Box ((fun a ->
-			      (channel_of a) = "train_cross"), False),
-				     Box ((fun a ->
-				       (channel_of a) = "cross_cross"), False)),
-				 Box ((fun a -> true), VarFormula "Z"))) in
+			    And (Or (
+			      Box (
+				(fun a ->
+				  match a with
+				  | Tau -> false
+				  | other ->
+				    (channel_of other) = "train_cross"),
+				False),
+			      Box (
+				(fun a ->
+				  match a with
+				  | Tau -> false
+				  | other ->
+				    (channel_of other) = "car_cross"),
+				False)),
+				 Box ((fun a -> true),
+				      VarFormula "Z"))) in
+  let liveness_formula = Min ("Z", [],
+			      Or (
+				Diamond (
+				  (fun a ->
+				    match a with
+				    | Tau -> false
+				    | other ->
+				      (channel_of other) = "train_cross"),
+				  True),
+				Diamond ((fun a -> true),
+					 VarFormula "Z"))) in
+  let if_car_approaches_eventually_it_crosses_formula =
+    Max ("Z", [],
+	 And (
+	   Box (
+	     (fun a ->
+	       match a with
+	       | Tau -> false
+	       | other ->
+		 (channel_of other) = "car"),
+	     Min ("Y", [],
+		  And (
+		    Diamond ((fun a -> true), True),
+		    Box (
+		      (fun a ->
+			match a with
+			| Tau -> false
+			| other ->
+			  not ((channel_of other) = "car_cross")),
+		      VarFormula "Y")))),
+	   Box (
+	     (fun a ->
+	       match a with
+	       | Tau -> false
+	       | other ->
+		 not ((channel_of other) = "car")),
+	     VarFormula "Z"))) in
   print_string ("Process road: " ^ string_of_process road);
   print_newline ();  
   print_string ("Process rail: " ^ string_of_process rail);
@@ -340,7 +397,14 @@ let car_train_crossing_example = function () ->
   print_newline ();
   print_string ("Process crossing satisfy maxZ(([train_cross]ff \
  or [car_cross]ff) and [Act]Z): " ^
-    (string_of_bool (sat crossing safety_formula)));;  
+		   (string_of_bool (sat crossing safety_formula)));
+  print_newline ();
+  print_string ("Process crossing satisfy minZ(<train_cross>tt or <Act>Z): " ^
+		   (string_of_bool (sat crossing liveness_formula)));
+  print_newline ();
+  print_string ("Process crossing satisfy maxZ([car](minY(<Act>tt and [-car_cross]Y)) and  [-car]Z): " ^
+		   (string_of_bool
+		      (sat crossing if_car_approaches_eventually_it_crosses_formula)));;  
 
 let _ =
   print_string "--------not bisimilar processes example------------";
@@ -352,3 +416,7 @@ let _ =
   print_newline ();
   car_train_crossing_example();
   print_newline ();;
+
+let restricted = Restrict (Prefix (In "a", Var 'X'), ["b"]) in
+let p = Recur ('X', restricted) in
+unfold_process 'X' p restricted;;
