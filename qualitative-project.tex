@@ -14,7 +14,7 @@ according to the following grammar:
   \mid \nu X.\phi
 \end{displaymath}
 where $a \in Act$, $X \in Var$, $tt$ means \emph{true} and $ff$ means
-\emph{false}. The fixpoint operators $\mu X.\phi, \nu X.\phi$ bind
+\emph{false}. The fix point operators $\mu X.\phi, \nu X.\phi$ bind
 free occurrences of variable $X \in Var$.
 
 Formulae that can be composed using the syntax above are interpreted
@@ -25,7 +25,7 @@ true while we interpret an \emph{open} formula using a function (also
 called \emph{environment}) $\rho$ such that $\rho: Var \rightarrow
 2^S$. Roughly speaking, $\rho(X)$ interprets a free variable $X$
 contained in a formula $\phi$ by a subset of $S$, representing an
-assumption about the set of states satisfying the subformula $X$.
+assumption about the set of states satisfying the sub formula $X$.
 
 Let $T = (S, Act, \rightarrow)$ be a \emph{Labeled Transition
   Systems}, $\phi$ a formula and $\rho$ an environment, we define the
@@ -64,8 +64,65 @@ where $\rho_{X, x, \rho}^{\prime}: Var \rightarrow 2^S$ is defined as:
   \end{split}
 \end{displaymath}
 
+Let $T = (S, Act, \rightarrow)$ be a finite-state \emph{Labeled
+  Transition Systems} , due to \emph{Kleene fixpoint theorem} it is
+possible to characterize $ \mathcal{M}_T(\mu X.\phi, \rho)$ and $
+\mathcal{M}_T(\nu X.\phi, \rho)$ by the following identities:
+\begin{displaymath}
+  \begin{split}
+    \mathcal{M}_T(\mu X.\phi, \rho) = \bigcup \{F_{\phi, \rho,
+      X}(\emptyset):i\geq 0\} \\
+    \mathcal{M}_T(\nu X.\phi, \rho) = \bigcap \{F_{\phi, \rho,
+      X}(S):i\geq 0\} \\
+  \end{split}
+\end{displaymath}
 
+\section{Model checker implementation}
 
+In this section we describe our implementation of a \emph{local model
+  checker} using the programming language OCaml.
+
+The development of the module has been structured in the following
+way:
+\begin{enumerate}
+\item built a new type $Process$ with the necessary constructors to
+  make \emph{CCS processes};
+\item built a function $unfold\_process$ which allow to do one
+  ``unfolding step'' respect to a free variable $X$ bound by a $Recur$
+  process constructor;
+\item built a function $next$ which consume a $Process$ and return a
+  list of of possible computations that the given process exhibits;
+\item built a new type $formula$ with the necessary constructors to
+  make $\mu$-calculus formulae;
+\item built a function $unfold\_formula$ which allow to do one
+  ``unfolding step'' respect to a free variable $X$ bound by a fix
+  point operator;
+\item built a function $sat$ which consume a process $p$ and a formula
+  $f$ and produce the decision of $p \vdash f$, if $p$ is a finite
+  state process.
+\end{enumerate}
+
+We would like to discuss briefly the details of function $sat$. This
+is the core of the model checker, using a local strategy.
+
+\section{Case studies}
+
+In this section we report two models that we've checked using our
+implementation described in the section above.
+
+\subsection{Non-bisimilar processes}
+
+The processes under study are taken from \cite{1324845} and are
+reported in \autoref{fig:not-bisimilar-processes}. Those processes
+aren't bisimilar pairwise and, using the result that two processes are
+bisimilar if and only if they satisfy exactly the same formulae, we
+exhibit three witnesses of non-bisimilarity:
+\begin{figure}[htb]
+  \centering
+  \includegraphics{qualitative-project/not-bisimilar-processes.png}
+  \caption{Three not bisimilar processes}
+  \label{fig:not-bisimilar-processes}
+\end{figure}
 
 \begin{verbatim}
 Process s: RecX(a?.b?.RecY((b?.Y + a?.X)))
@@ -76,21 +133,49 @@ s isn't  bisimilar to t due to formula f= [a][b]<a>tt
 s satisfy f: true
 t satisfy f: false
 
-
 s isn't  bisimilar to v due to formula f= [a]<b>[a]ff
 s satisfy f: false
 v satisfy f: true
-
 
 t isn't  bisimilar to v due to formula f= [a]<b>[b]ff
 t satisfy f: true
 v satisfy f: false
 \end{verbatim}
-The processes under study are taken from \cite{1324845} and are
-reported in \autoref{fig:not-bisimilar-processes}.
-\begin{figure}[htb]
-  \centering
-  \includegraphics{qualitative-project/not-bisimilar-processes.png}
-  \caption{Three not bisimilar processes}
-  \label{fig:not-bisimilar-processes}
-\end{figure}
+
+\subsection{Car-train crossing}
+
+In this model we catch the situation of a cross between a road and a
+rail. On both tracks a vehicle attempts to cross, a car and a train
+respectively. In order to cross, a vehicle have to synchronize with a
+``semaphore''.
+
+We build the necessary \emph{CCS processes} in order to implement the
+model and we proceed to verify the following properties:
+\begin{itemize}
+\item a car eventually cross;
+\item it is no possible for the car and the train to cross simultaneously;
+\item for each car $c$ that attempts to cross, $c$ eventually succeed.
+\end{itemize}
+Those properties are liveness, safety and fairness properties and
+involve the solution of a min fixed point, a max fixed point and a
+mixture of min and max fixed points respectively. We've written those
+properties using our OCaml formula constructors and verified them with
+the following results:
+\begin{verbatim}
+Process road: RecX(car?.up?.car_cross!.down!.X)
+Process rail: RecY(train?.green?.train_cross!.red!.Y)
+Process signal: RecZ((green!.red?.Z + up!.down?.Z))
+Process crossing: (((RecX(car?.up?.car_cross!.down!.X) |
+RecY(train?.green?.train_cross!.red!.Y)) | RecZ((green!.red?.Z +
+up!.down?.Z))))\{green, red, up, down}
+(((RecX(car?.up?.car_cross!.down!.X) |
+RecY(train?.green?.train_cross!.red!.Y)) | RecZ((green!.red?.Z +
+up!.down?.Z))))\{green, red, up, down}
+Process crossing satisfy maxZ(([train_cross]ff or [car_cross]ff)
+                                  and [Act]Z): true
+Process crossing satisfy minZ(<train_cross>tt or <Act>Z): true
+Process crossing satisfy maxZ([car](minY(<Act>tt and [-car_cross]Y))
+                                  and  [-car]Z): true
+\end{verbatim}
+In this work we've written the properties from the ``car point of
+view'' but the respective ones for the train also hold.

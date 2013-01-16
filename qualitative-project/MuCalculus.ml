@@ -181,14 +181,12 @@ let rec sat p = function
     let pred_matchers = List.find_all
       (fun (a, p') ->
 	match a with
-	(* | Tau -> true *)
 	| others -> pred a) (next p) in
     List.for_all (fun (a, p') -> sat p' f) pred_matchers
   | Diamond (pred, f) ->
     let pred_matchers = List.find_all
       (fun (a, p') ->
 	match a with
-	(* | Tau -> true *)
 	| others -> pred a) (next p) in
     List.exists (fun (a, p') -> sat p' f) pred_matchers
   | Min (var_name, seen_procs, f) ->
