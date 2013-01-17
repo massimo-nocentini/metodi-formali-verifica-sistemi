@@ -50,7 +50,7 @@ defined inductively as follows:
     \mathcal{M}_T(\nu X.\phi, \rho) &= fix_{\nu}F_{\phi, \rho, X} \\
   \end{split}
 \end{displaymath}
-where $fix_{\mu}F_{\phi, \rho, X}, fix_{\mu}F_{\phi, \rho, X}$ mean
+where $fix_{\mu}F_{\phi, \rho, X}, fix_{\nu}F_{\phi, \rho, X}$ mean
 the least and greater fixed points of the function $F_{\phi, \rho, X}:
 2^S \rightarrow 2^S$, which is defined as:
 \begin{displaymath}
@@ -65,25 +65,26 @@ where $\rho_{X, x, \rho}^{\prime}: Var \rightarrow 2^S$ is defined as:
 \end{displaymath}
 
 Let $T = (S, Act, \rightarrow)$ be a finite-state \emph{Labeled
-  Transition Systems} , due to \emph{Kleene fixpoint theorem} it is
-possible to characterize $ \mathcal{M}_T(\mu X.\phi, \rho)$ and $
-\mathcal{M}_T(\nu X.\phi, \rho)$ by the following identities:
+  Transition Systems} (those for the set of states is finite), due to
+\emph{Kleene fix point theorem} it is possible to characterize $
+\mathcal{M}_T(\mu X.\phi, \rho)$ and $ \mathcal{M}_T(\nu X.\phi,
+\rho)$ by the following identities:
 \begin{displaymath}
   \begin{split}
     \mathcal{M}_T(\mu X.\phi, \rho) = \bigcup \{F_{\phi, \rho,
-      X}(\emptyset):i\geq 0\} \\
+      X}^i(\emptyset):i\geq 0\} \\
     \mathcal{M}_T(\nu X.\phi, \rho) = \bigcap \{F_{\phi, \rho,
-      X}(S):i\geq 0\} \\
+      X}^i(S):i\geq 0\} \\
   \end{split}
 \end{displaymath}
+where $F_{\phi, \rho, X}^{i+1}(a) = F_{\phi, \rho, X}(F_{\phi, \rho,
+  X}^i(a))$ and $F_{\phi, \rho, X}^0(a) = a$.
 
 \section{Model checker implementation}
 
 In this section we describe our implementation of a \emph{local model
-  checker} using the programming language OCaml.
-
-The development of the module has been structured in the following
-way:
+  checker} using the programming language OCaml. The development of
+the module has been structured in the following way:
 \begin{enumerate}
 \item built a new type $Process$ with the necessary constructors to
   make \emph{CCS processes};
@@ -103,7 +104,59 @@ way:
 \end{enumerate}
 
 We would like to discuss briefly the details of function $sat$. This
-is the core of the model checker, using a local strategy.
+is the core of the model checker, using a local strategy explained in
+the Winskel's work \cite{Winskel1991157}. It is a bit different
+respect the theory described above because a nice idea is introduced
+for fix point operators: Winskel allow a free variable to curry a set
+a states in a recursive formula specification, for example it is
+possible to write the formula $\nu X\{p_1,\ldots,p_n\} A$, where $p_i
+\in S$ and $A$ is a $\mu$-calculus formula (where the $X$ variable
+probably occur into it). This is important due the following
+equivalence:
+\begin{displaymath}
+  p \in \nu X.\gamma(X) \leftrightarrow p \in \gamma (\nu X(\{p\}\cup\gamma(X)))
+\end{displaymath}
+where $\gamma : 2^S \rightarrow 2^S$ monotonic respect set inclusion
+relation. Roughly speaking, the equivalence says that the process $p$
+satisfies the recursively defined formula if and only if $p$ satisfies
+a certain kind of unfolding of the recursively defined
+formula. Winskel asks to proof the following statement which is
+directly implemented in our implementation of $sat$ function:
+\begin{displaymath}
+  p \in \left \lbrace p_1,\ldots,p_n\right\rbrace \rightarrow
+  p \vdash \nu X \left \lbrace p_1,\ldots,p_n\right\rbrace A
+\end{displaymath}
+
+\begin{proof}
+  By contropositive, writing $\nu X \left \lbrace
+    p_1,\ldots,p_n\right\rbrace A$ as $\nu X (\left \lbrace
+    p_1,\ldots,p_n\right\rbrace \vee A)$ and $\cdot[ \frac{T}{X} ]$ is
+  a function (written in post fix notation) such that $[ \frac{T}{X} ]:
+  2^S \rightarrow 2^S$, we have:
+  \begin{displaymath}
+    \begin{split}
+      p & \not \vdash \nu X (\left \lbrace p_1,\ldots,p_n\right\rbrace
+      \vee A) \\
+      & \updownarrow \text{ by def of relation } \vdash  \\
+      p & \not \in \bigcup\left\{T \in 2^S: T\subseteq (\left \lbrace
+          p_1,\ldots, p_n \right\rbrace \cup A )\left[ \frac{T}{X} \right] \right\}\\
+      & \updownarrow \\
+      \not \exists T \in (2^S \setminus \emptyset)&:T \subseteq (\left
+        \lbrace p_1,\ldots, p_n \right\rbrace \cup A)\left[
+        \frac{T}{X} \right] \quad \text{ such that } \quad p \in T \\
+      & \updownarrow \left \lbrace p_1,\ldots, p_n \right\rbrace
+      \text{ cannot contain free occurrences of } X \in Var  \\
+      \not \exists T \in (2^S \setminus \emptyset)&:T \subseteq \left
+        \lbrace p_1,\ldots, p_n \right\rbrace \cup A\left[
+        \frac{T}{X} \right] \quad \text{ such that } \quad p \in T \\
+      & \updownarrow \text{ in particular } T = \left \lbrace
+        p_1,\ldots, p_n \right\rbrace \text{doesn't satisfy
+        the condition} \\
+      p &\not\in \left \lbrace p_1,\ldots, p_n \right\rbrace
+    \end{split}
+  \end{displaymath}
+ 
+\end{proof}
 
 \section{Case studies}
 
@@ -152,9 +205,31 @@ respectively. In order to cross, a vehicle have to synchronize with a
 We build the necessary \emph{CCS processes} in order to implement the
 model and we proceed to verify the following properties:
 \begin{itemize}
-\item a car eventually cross;
-\item it is no possible for the car and the train to cross simultaneously;
-\item for each car $c$ that attempts to cross, $c$ eventually succeed.
+\item a train eventually cross, written in $\mu$-calculus using a min
+  fix point:
+  \begin{displaymath}
+    \mu Z(\langle train\_cross\rangle tt \vee \langle Act
+    \rangle Z)
+  \end{displaymath}
+\item it is no possible for the car and the train to cross
+  simultaneously, written in $\mu$-calculus using a max fix point:
+  \begin{displaymath}
+    \nu Z(([train\_cross]ff \vee [car\_cross]ff) \wedge [Act]Z)
+  \end{displaymath}
+\item for each car $c$ that attempts to cross, $c$ eventually succeed,
+  written in $\mu$-calculus using a mixture of min and max fix points:
+  \begin{displaymath}
+    \nu Z([car](\mu Y(\langle Act \rangle tt \vee [-car\_cross]Y))
+    \wedge  [-car]Z)
+  \end{displaymath}
+  It is interesting to note that the above formula does not use
+  \emph{alternating fix points}, that is the variable $Z$ bound by the
+  out most $\nu$ does not appear in the context of the formula bounded
+  by the innermost $\mu$. This is not the worst case for the
+  $\mu$-calculus model checking (it is possible to write an equivalent
+  \emph{aCTL} formula for the above one using the ``infinitely often''
+  templates, while a formula with \emph{alternating fix points} has
+  not an \emph{aCTL} equivalent).
 \end{itemize}
 Those properties are liveness, safety and fairness properties and
 involve the solution of a min fixed point, a max fixed point and a
@@ -177,5 +252,3 @@ Process crossing satisfy minZ(<train_cross>tt or <Act>Z): true
 Process crossing satisfy maxZ([car](minY(<Act>tt and [-car_cross]Y))
                                   and  [-car]Z): true
 \end{verbatim}
-In this work we've written the properties from the ``car point of
-view'' but the respective ones for the train also hold.
