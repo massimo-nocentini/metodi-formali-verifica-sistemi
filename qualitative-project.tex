@@ -1,9 +1,10 @@
 In this part of the document we'll talk about the Hennessy-Milner
-logic over CCS processes. We approach the logic in two steps: the
-former without recursion, where we'll use the logic to show the
-non-bisimilarity of toy processes; the latter including recursion
-operators, where we'll build a simple model involving a car and a
-train, aiming to verify some safety and liveness properties.
+logic over CCS processes and its extension with fix point
+operators. In a first step we review the foundamentals of the logic,
+giving the abstract syntax and an interpretation function. In a second
+step we talk about our implementation of the logic using the
+\emph{OCaml} programming language and in a third step we apply our
+implementation to two simple case studies.
 
 \section{$\mu$-calculus definition}
 Following \cite{MuScSt1999}, $\mu$-calculus formulae are constructed
@@ -29,8 +30,8 @@ assumption about the set of states satisfying the sub formula $X$.
 
 Let $T = (S, Act, \rightarrow)$ be a \emph{Labeled Transition
   Systems}, $\phi$ a formula and $\rho$ an environment, we define the
-set $\mathcal{M}_T(\phi, \rho) \subseteq S$ satisfying $\phi$ is
-defined inductively as follows:
+set $\mathcal{M}_T(\phi, \rho) \subseteq S$ satisfying $\phi$
+inductively as follows:
 \begin{displaymath}
   \begin{split}
     \mathcal{M}_T(tt, \rho) &= S \\
@@ -88,36 +89,37 @@ the module has been structured in the following way:
 \begin{enumerate}
 \item built a new type $Process$ with the necessary constructors to
   make \emph{CCS processes};
-\item built a function $unfold\_process$ which allow to do one
+\item built a function $unfold\_process$ which allows to do one
   ``unfolding step'' respect to a free variable $X$ bound by a $Recur$
   process constructor;
-\item built a function $next$ which consume a $Process$ and return a
-  list of of possible computations that the given process exhibits;
+\item built a function $next$ which consumes a $Process$ and returns a
+  list of possible computations the given process exhibits;
 \item built a new type $formula$ with the necessary constructors to
   make $\mu$-calculus formulae;
-\item built a function $unfold\_formula$ which allow to do one
-  ``unfolding step'' respect to a free variable $X$ bound by a fix
+\item built a function $unfold\_formula$ which allows to do one
+  ``unfolding step'' respect to a free variable $X$ bounded by a fix
   point operator;
-\item built a function $sat$ which consume a process $p$ and a formula
-  $f$ and produce the decision of $p \vdash f$, if $p$ is a finite
-  state process.
+\item built a function $sat$ which consumes a process $p$ and a
+  formula $f$ and produces the decision of $p \vdash f$, if $p$ is a
+  finite state process.
 \end{enumerate}
 
-We would like to discuss briefly the details of function $sat$. This
-is the core of the model checker, using a local strategy explained in
-the Winskel's work \cite{Winskel1991157}. It is a bit different
-respect the theory described above because a nice idea is introduced
-for fix point operators: Winskel allow a free variable to curry a set
-a states in a recursive formula specification, for example it is
+We would like to discuss briefly the details of $sat$ function (the
+code can be found in \autoref{subsec:sat-function-code}). It is the
+core of the model checker, using a local strategy explained in the
+Winskel's work \cite{Winskel1991157}. It is a bit different respect
+the theory described above because a nice idea is introduced for fix
+point operators: Winskel allows a free variable to curry a set a
+states in a recursive formula specification, for example it is
 possible to write the formula $\nu X\{p_1,\ldots,p_n\} A$, where $p_i
 \in S$ and $A$ is a $\mu$-calculus formula (where the $X$ variable
-probably occur into it). This is important due the following
+probably occurs into it). This is important due the following
 equivalence:
 \begin{displaymath}
   p \in \nu X.\gamma(X) \leftrightarrow p \in \gamma (\nu X(\{p\}\cup\gamma(X)))
 \end{displaymath}
 where $\gamma : 2^S \rightarrow 2^S$ monotonic respect set inclusion
-relation. Roughly speaking, the equivalence says that the process $p$
+relation. Roughly speaking, the equivalence says that a process $p$
 satisfies the recursively defined formula if and only if $p$ satisfies
 a certain kind of unfolding of the recursively defined
 formula. Winskel asks to proof the following statement which is
@@ -197,7 +199,7 @@ v satisfy f: false
 
 \subsection{Car-train crossing}
 
-In this model we catch the situation of a cross between a road and a
+In this model we catch the situation of a cross of a road and a
 rail. On both tracks a vehicle attempts to cross, a car and a train
 respectively. In order to cross, a vehicle have to synchronize with a
 ``semaphore''.
@@ -219,13 +221,13 @@ model and we proceed to verify the following properties:
 \item for each car $c$ that attempts to cross, $c$ eventually succeed,
   written in $\mu$-calculus using a mixture of min and max fix points:
   \begin{displaymath}
-    \nu Z([car](\mu Y(\langle Act \rangle tt \vee [-car\_cross]Y))
+    \nu Z([car](\mu Y(\langle Act \rangle tt \wedge [-car\_cross]Y))
     \wedge  [-car]Z)
   \end{displaymath}
   It is interesting to note that the above formula does not use
-  \emph{alternating fix points}, that is the variable $Z$ bound by the
-  out most $\nu$ does not appear in the context of the formula bounded
-  by the innermost $\mu$. This is not the worst case for the
+  \emph{alternating fix points}, that is the variable $Z$ bounded by
+  the out most $\nu$ does not appear in the context of the formula
+  bounded by the innermost $\mu$. This is not the worst case for the
   $\mu$-calculus model checking (it is possible to write an equivalent
   \emph{aCTL} formula for the above one using the ``infinitely often''
   templates, while a formula with \emph{alternating fix points} has
@@ -252,3 +254,38 @@ Process crossing satisfy minZ(<train_cross>tt or <Act>Z): true
 Process crossing satisfy maxZ([car](minY(<Act>tt and [-car_cross]Y))
                                   and  [-car]Z): true
 \end{verbatim}
+
+\subsection{$sat$ function code}
+\label{subsec:sat-function-code}
+In this section we report the code of the $sat$ function:
+\lstset{language=Caml} 
+\begin{lstlisting}
+  let rec sat p = function
+  | True -> true
+  | Not f -> not (sat p f)
+  | Or (f,g) -> (sat p f) || (sat p g)
+  | And (f,g) -> (sat p f) && (sat p g)
+  | Box (pred, f) ->
+    let pred_matchers = List.find_all
+      (fun (a, p') ->
+	match a with
+	| others -> pred a) (next p) in
+    List.for_all (fun (a, p') -> sat p' f) pred_matchers
+  | Diamond (pred, f) ->
+    let pred_matchers = List.find_all
+      (fun (a, p') ->
+	match a with
+	| others -> pred a) (next p) in
+    List.exists (fun (a, p') -> sat p' f) pred_matchers
+  | Min (var_name, seen_procs, f) ->
+    if List.mem p seen_procs
+    then false
+    else sat p (unfold_formula var_name
+                  (Min (var_name, (p::seen_procs), f)) f)
+  | Max (var_name, seen_procs, f) ->
+    if List.mem p seen_procs
+    then true
+    else sat p (unfold_formula var_name
+                  (Max (var_name, (p::seen_procs), f)) f)
+  | _ -> false;;
+\end{lstlisting}
